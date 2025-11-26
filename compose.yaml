@@ -1,0 +1,45 @@
+services:
+  postgres-dev:
+    image: postgres:16
+    container_name: toxic-bet-dev
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_DEV_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_DEV_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DEV_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data  # ⬅️ Volume exclusivo DEV
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_DEV_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-docker:
+    image: postgres:16
+    container_name: toxic-bet
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_DOCKER_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_DOCKER_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DOCKER_DB}
+    ports:
+      - "5440:5432"
+    volumes:
+      - postgres_docker_data:/var/lib/postgresql/data  # ⬅️ Volume exclusivo HOMOLOGAÇÃO
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_DOCKER_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_dev_data:      # Volume para DEV
+  postgres_docker_data:   # Volume para HOMOLOGAÇÃO

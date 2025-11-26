@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: toxic-bet
+
+  r2dbc:
+    url: r2dbc:postgresql://${POSTGRES_DEV_HOST:localhost}:${POSTGRES_DEV_PORT:5432}/${POSTGRES_DEV_DB}
+    username: ${POSTGRES_DEV_USER}      # ⬅️ SEM valor padrão
+    password: ${POSTGRES_DEV_PASSWORD}  # ⬅️ SEM valor padrão
+
+server:
+  port: 8080

@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: toxic-bet
+
+  r2dbc:
+    url: r2dbc:postgresql://${POSTGRES_DOCKER_HOST:localhost}:${POSTGRES_DOCKER_PORT:5440}/${POSTGRES_DOCKER_DB}
+    username: ${POSTGRES_DOCKER_USER}
+    password: ${POSTGRES_DOCKER_PASSWORD}
+
+server:
+  port: 8585
