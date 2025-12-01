@@ -1,0 +1,8 @@
+package br.com.hahn.toxicbet.domain.model.enums;
+
+public enum Result {
+
+    HOME_WIN,
+    VISITING_WIN,
+    DRAW
+}

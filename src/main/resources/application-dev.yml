@@ -3,9 +3,19 @@ spring:
     name: toxic-bet
 
   r2dbc:
-    url: r2dbc:postgresql://${POSTGRES_DEV_HOST:localhost}:${POSTGRES_DEV_PORT:5432}/${POSTGRES_DEV_DB}
-    username: ${POSTGRES_DEV_USER}      # ⬅️ SEM valor padrão
-    password: ${POSTGRES_DEV_PASSWORD}  # ⬅️ SEM valor padrão
+    url: r2dbc:postgresql://${POSTGRES_DEV_HOST:localhost}:${POSTGRES_DEV_PORT:5435}/${POSTGRES_DEV_DB}
+    username: ${POSTGRES_DEV_USER}
+    password: ${POSTGRES_DEV_PASSWORD}
+
+  flyway:
+    url: jdbc:postgresql://${POSTGRES_DEV_HOST:localhost}:${POSTGRES_DEV_PORT:5435}/${POSTGRES_DEV_DB}
+    user: ${POSTGRES_DEV_USER}
+    password: ${POSTGRES_DEV_PASSWORD}
+    enabled: true
+
+  sql:
+    init:
+      mode: always
 
 server:
-  port: 8080
+  port: 10000
