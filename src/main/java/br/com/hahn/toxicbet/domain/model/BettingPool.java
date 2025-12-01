@@ -4,12 +4,16 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
+import java.util.List;
+
 @Data
-@Table("user")
-public class User {
+@Table("betting_pool")
+public class BettingPool {
 
     @Id
     private Long id;
-    private String name;
-    private String email;
+    private String bettingPoolName;
+    private String bettingPoolKey;
+    private Long bettingPoolOwnerId;
+    private List<Long> users;
 }
