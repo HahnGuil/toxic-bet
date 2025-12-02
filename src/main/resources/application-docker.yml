@@ -7,5 +7,36 @@ spring:
     username: ${POSTGRES_DOCKER_USER}
     password: ${POSTGRES_DOCKER_PASSWORD}
 
+  flyway:
+    url: jdbc:postgresql://${POSTGRES_DOCKER_HOST:postgres-docker}:${POSTGRES_DOCKER_PORT:5432}/${POSTGRES_DOCKER_DB}
+    user: ${POSTGRES_DOCKER_USER}
+    password: ${POSTGRES_DOCKER_PASSWORD}
+    enabled: true
+
+  kafka:
+    bootstrap-servers: kafka:9092
+    consumer:
+      group-id: update-user-data
+      auto-offset-reset: earliest
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://auth-server:2310/auth-server/public-key/jwks
+          jwk-cache-lifespan: 3600000
+          connect-timeout: 30000
+          read-timeout: 30000
+
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=100,expireAfterWrite=1h
+
 server:
   port: 20000
+
+logging:
+  level:
+    org.springframework. security: INFO
+    br.com.hahn.toxicbet: INFO

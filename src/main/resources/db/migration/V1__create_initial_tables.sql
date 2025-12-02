@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS teams (
                                      id BIGSERIAL PRIMARY KEY,
-                                     name VARCHAR(255) NOT NULL
+                                     name VARCHAR(255) NOT NULL UNIQUE
     );
 
 CREATE TABLE IF NOT EXISTS match (
@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS match (
                                      result VARCHAR(50),
     match_time TIMESTAMP NOT NULL,
     CONSTRAINT fk_home_team FOREIGN KEY (home_team_id) REFERENCES teams(id),
-    CONSTRAINT fk_visiting_team FOREIGN KEY (visiting_team_id) REFERENCES teams(id)
+    CONSTRAINT fk_visiting_team FOREIGN KEY (visiting_team_id) REFERENCES teams(id),
+    CONSTRAINT chk_different_teams CHECK (home_team_id != visiting_team_id)
     );
 
 CREATE TABLE IF NOT EXISTS bet (
@@ -27,7 +28,8 @@ CREATE TABLE IF NOT EXISTS bet (
                                    match_id BIGINT NOT NULL,
                                    result VARCHAR(50) NOT NULL,
     CONSTRAINT fk_bet_user FOREIGN KEY (user_id) REFERENCES users(id),
-    CONSTRAINT fk_bet_match FOREIGN KEY (match_id) REFERENCES match(id)
+    CONSTRAINT fk_bet_match FOREIGN KEY (match_id) REFERENCES match(id),
+    CONSTRAINT uq_user_match_bet UNIQUE (user_id, match_id)
     );
 
 CREATE TABLE IF NOT EXISTS betting_pool (
@@ -41,7 +43,7 @@ CREATE TABLE IF NOT EXISTS betting_pool (
 
 CREATE TABLE IF NOT EXISTS standings (
                                          id BIGSERIAL PRIMARY KEY,
-                                         user_id BIGINT NOT NULL,
+                                         user_id BIGINT NOT NULL UNIQUE,
                                          points INTEGER DEFAULT 0,
                                          CONSTRAINT fk_standings_user FOREIGN KEY (user_id) REFERENCES users(id)
     );

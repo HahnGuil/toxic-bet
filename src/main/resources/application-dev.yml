@@ -13,9 +13,35 @@ spring:
     password: ${POSTGRES_DEV_PASSWORD}
     enabled: true
 
+  kafka:
+    bootstrap-servers: localhost:9093
+    consumer:
+      group-id: update-user-data
+      auto-offset-reset: earliest
+
   sql:
     init:
       mode: always
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:2310/auth-server/public-key/jwks
+          jwk-cache-lifespan: 3600000
+          connect-timeout: 30000
+          read-timeout: 30000
+
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=100,expireAfterWrite=1h
+
 server:
   port: 10000
+
+logging:
+  level:
+    org.springframework. security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    br.com.hahn.toxicbet: DEBUG
