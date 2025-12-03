@@ -81,8 +81,6 @@ public class SecurityConfig {
 
             jwtDecoder.setJwtValidator(new JwtTimestampValidator());
 
-            log.info("JWT Decoder configured - JWKS URI: {}, Cache: {}ms", jwkSetUri, jwkCacheLifespan);
-
             return jwtDecoder;
         } catch (Exception e) {
             log.error("Error creating JWT Decoder", e);

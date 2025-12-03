@@ -1,6 +1,8 @@
 # Environment Variables
 .env
 
+target/generated-sources/
+
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar

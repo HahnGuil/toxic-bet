@@ -16,8 +16,6 @@ import java.util.List;
 @Slf4j
 public class JwtService {
 
-//    TODO - CORRIGIR E AJSUTAR OS LOG's
-
     private final TopicServiceSend topicServiceSend;
 
     private static final String OAUTH_USER_TYPE = "OAUTH_USER";
@@ -26,40 +24,32 @@ public class JwtService {
 
     public Mono<Void> updateOAuthUserApplication() {
         return ReactiveSecurityContextHolder.getContext()
-                .doOnNext(ctx -> log.info("SecurityContext obtido: {}", ctx))
                 .map(SecurityContext::getAuthentication)
-                .doOnNext(auth -> log.info("Authentication obtido: {}, Principal type: {}",
-                        auth, auth.getPrincipal().getClass().getName()))
                 .map(auth -> (Jwt) auth.getPrincipal())
-                .doOnNext(jwt -> log.info("JWT obtido - type_user: {}, applications: {}",
-                        jwt.getClaim("type_user"), jwt.getClaim("applications")))
                 .flatMap(jwt -> {
                     String typeUser = jwt.getClaim("type_user");
                     boolean hasApp = hasApplication(jwt);
 
-                    log.info("Validação - type_user: {}, hasApplication: {}, esperado: {}",
-                            typeUser, hasApp, OAUTH_USER_TYPE);
-
                     if (OAUTH_USER_TYPE.equals(typeUser) && !hasApp) {
-                        log.info("Condições atendidas - enviando para Kafka");
+                        log.info("JwtService: The user type is as expected and there is no toxic-betting in the applications.");
                         return Mono.fromRunnable(() ->
                                 topicServiceSend.updateOAuthUserApplicatioToToxicBet(
                                         new UserSyncEvent(jwt.getClaim("user_id"), APPLICATION_CODE)
                                 )
                         );
                     }
-                    log.info("Condições não atendidas - não enviando para Kafka");
+                    log.info("JwtService: Not OAuth or user already hasa the toxic-bet application");
                     return Mono.empty();
                 })
-                .doOnError(e -> log.error("Erro ao processar JWT", e))
                 .onErrorResume(e -> Mono.empty())
                 .then();
     }
 
 
+
     private boolean hasApplication(Jwt jwt) {
         List<String> applications = jwt.getClaim("applications");
-        log.info("Lista de applications: {}", applications);
+        log.info("JwtService: List of user applications: {}", applications);
         if (applications == null || applications.isEmpty()) {
             return false;
         }

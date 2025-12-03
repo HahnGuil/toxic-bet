@@ -14,7 +14,7 @@ public class KafkaProducerService {
     private final KafkaTemplate<String, UserSyncEvent> kafkaUserTemplate;
 
     public void sendUserSyncEvent(UserSyncEvent userSyncEvent){
-        log.info("Recebido no Consumer");
+        log.info("KafkaProducerService: Send topic to kafka, user id: {}", userSyncEvent.getUuid());
         kafkaUserTemplate.send("sync-application", userSyncEvent.getUuid(), userSyncEvent);
     }
 }

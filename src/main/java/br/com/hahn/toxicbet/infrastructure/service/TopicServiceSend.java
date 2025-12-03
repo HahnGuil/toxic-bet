@@ -13,7 +13,7 @@ public class TopicServiceSend {
     private final KafkaProducerService kafkaProducerService;
 
     public void updateOAuthUserApplicatioToToxicBet(UserSyncEvent userSyncEvent){
-        log.info("Passando no send");
+        log.info("TopicServiceSend: Send userSyncEvent to kafka, user id: {}", userSyncEvent.getUuid());
         kafkaProducerService.sendUserSyncEvent(userSyncEvent);
     }
 }
