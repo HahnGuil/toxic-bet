@@ -14,7 +14,7 @@ services:
     volumes:
       - postgres_dev_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_DEV_USER} -p 5432" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_DEV_USER} -p 5432 -d ${POSTGRES_DEV_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -34,7 +34,7 @@ services:
     volumes:
       - postgres_docker_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_DOCKER_USER} -p 5432" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_DOCKER_USER} -p 5432 -d ${POSTGRES_DOCKER_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
