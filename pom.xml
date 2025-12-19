@@ -140,7 +140,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/swagger.yml</inputSpec>
+                            <inputSpec>${project.basedir}/src/main/resources/static/swagger.yml</inputSpec>
                             <generatorName>spring</generatorName>
                             <library>spring-boot</library>
                             <apiPackage>br.com.hahn.toxicbet.api</apiPackage>
@@ -152,6 +152,7 @@
                                 <skipDefaultInterface>true</skipDefaultInterface>
                                 <useTags>true</useTags>
                                 <dateLibrary>java8</dateLibrary>
+                                <openApiNullable>false</openApiNullable>
                             </configOptions>
                         </configuration>
                     </execution>
