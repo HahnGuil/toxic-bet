@@ -1,28 +1,31 @@
 package br.com.hahn.toxicbet.domain.model;
 
-import br.com.hahn.toxicbet.domain.model.enums.Result;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-import java.util.UUID;
-
 @Data
-@Table("Bet")
+@Table("oddie")
 @RequiredArgsConstructor
-public class Bet {
+public class Oddie {
 
     @Id
     private Long id;
 
-    @Column("user_id")
-    private UUID userId;
-
     @Column("match_id")
     private Long matchId;
 
-    @Column("result")
-    private Result result;
+    @Column("total_bets_for_match")
+    private Integer totalBetsForMatch;
+
+    @Column("odd_home_team")
+    private Double oddHomeTeam;
+
+    @Column("odd_visiting_team")
+    private Double oddVisitingTeam;
+
+    @Column("odd_draw")
+    private Double oddDraw;
 }

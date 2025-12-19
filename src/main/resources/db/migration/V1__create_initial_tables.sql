@@ -1,16 +1,20 @@
+-- SQL migration: initial tables and oddie table
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
+-- Users table: stores application users with UUID primary key
 CREATE TABLE IF NOT EXISTS users (
                                      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                                      name VARCHAR(255) NOT NULL,
                                      email VARCHAR(255) NOT NULL UNIQUE
 );
 
+-- Teams table: stores teams with BIGSERIAL id
 CREATE TABLE IF NOT EXISTS teams (
                                      id BIGSERIAL PRIMARY KEY,
                                      name VARCHAR(255) NOT NULL UNIQUE
 );
 
+-- Match table: stores scheduled matches between two teams and the result
 CREATE TABLE IF NOT EXISTS match (
                                      id BIGSERIAL PRIMARY KEY,
                                      home_team_id BIGINT NOT NULL,
@@ -22,6 +26,7 @@ CREATE TABLE IF NOT EXISTS match (
                                      CONSTRAINT chk_different_teams CHECK (home_team_id != visiting_team_id)
 );
 
+-- Bet table: stores bets placed by users on matches; one bet per user per match
 CREATE TABLE IF NOT EXISTS bet (
                                    id BIGSERIAL PRIMARY KEY,
                                    user_id UUID NOT NULL,
@@ -32,6 +37,7 @@ CREATE TABLE IF NOT EXISTS bet (
                                    CONSTRAINT uq_user_match_bet UNIQUE (user_id, match_id)
 );
 
+-- Betting pool table: groups of users with an owner reference
 CREATE TABLE IF NOT EXISTS betting_pool (
                                             id BIGSERIAL PRIMARY KEY,
                                             betting_pool_name VARCHAR(255) NOT NULL,
@@ -41,6 +47,7 @@ CREATE TABLE IF NOT EXISTS betting_pool (
                                             CONSTRAINT fk_betting_pool_owner FOREIGN KEY (betting_pool_owner_id) REFERENCES users(id)
 );
 
+-- Standings table: stores points per user (unique per user)
 CREATE TABLE IF NOT EXISTS standings (
                                          id BIGSERIAL PRIMARY KEY,
                                          user_id UUID NOT NULL UNIQUE,
@@ -48,7 +55,29 @@ CREATE TABLE IF NOT EXISTS standings (
                                          CONSTRAINT fk_standings_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-CREATE INDEX idx_bet_user_id ON bet(user_id);
-CREATE INDEX idx_bet_match_id ON bet(match_id);
-CREATE INDEX idx_match_time ON match(match_time);
-CREATE INDEX idx_standings_user_id ON standings(user_id);
+-- Oddie table: stores odds for a match, one record per match (match_id must be unique)
+-- id: BIGSERIAL primary key
+-- match_id: references match(id) and must be unique (no duplicate match entries)
+-- total_bets_for_match: integer count of bets aggregated for the match
+-- odd_home_team: double precision odd for home team
+-- odd_visiting_team: double precision odd for visiting team
+-- odd_draw: double precision odd for draw outcome
+CREATE TABLE IF NOT EXISTS oddie (
+                                     id BIGSERIAL PRIMARY KEY,
+                                     match_id BIGINT NOT NULL,
+                                     total_bets_for_match INTEGER,
+                                     odd_home_team DOUBLE PRECISION,
+                                     odd_visiting_team DOUBLE PRECISION,
+                                     odd_draw DOUBLE PRECISION,
+                                     CONSTRAINT fk_oddie_match FOREIGN KEY (match_id) REFERENCES match(id),
+                                     CONSTRAINT uq_oddie_match UNIQUE (match_id)
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_bet_user_id ON bet(user_id);
+CREATE INDEX IF NOT EXISTS idx_bet_match_id ON bet(match_id);
+CREATE INDEX IF NOT EXISTS idx_match_time ON match(match_time);
+CREATE INDEX IF NOT EXISTS idx_standings_user_id ON standings(user_id);
+
+-- Index specifically for oddie.match_id for efficient lookups
+CREATE INDEX IF NOT EXISTS idx_oddie_match_id ON oddie(match_id);
