@@ -30,26 +30,32 @@ public class JwtService {
                     String typeUser = jwt.getClaim("type_user");
                     boolean hasApp = hasApplication(jwt);
 
+                    log.info("JwtService: Processing user - type: {}, hasApp: {}", typeUser, hasApp);
+
                     if (OAUTH_USER_TYPE.equals(typeUser) && !hasApp) {
-                        log.info("JwtService: The user type is as expected and there is no toxic-betting in the applications.");
+                        log.info("JwtService: User is OAuth and does not have toxic-bet app.  Sending Kafka message.");
                         return Mono.fromRunnable(() ->
                                 topicServiceSend.updateOAuthUserApplicatioToToxicBet(
                                         new UserSyncEvent(jwt.getClaim("user_id"), APPLICATION_CODE)
                                 )
                         );
                     }
-                    log.info("JwtService: Not OAuth or user already hasa the toxic-bet application");
+
+                    log.info("JwtService: User already has application or is not OAuth. Skipping.");
                     return Mono.empty();
                 })
-                .onErrorResume(e -> Mono.empty())
+                .doOnError(e -> log.error("JwtService: Error processing JWT:  {}", e.getMessage(), e))
+                .onErrorResume(e -> {
+                    log.warn("JwtService: Continuing despite error in OAuth check");
+                    return Mono.empty();
+                })
                 .then();
     }
 
-
-
     private boolean hasApplication(Jwt jwt) {
         List<String> applications = jwt.getClaim("applications");
-        log.info("JwtService: List of user applications: {}", applications);
+        log.debug("JwtService: User applications:  {}", applications);
+
         if (applications == null || applications.isEmpty()) {
             return false;
         }
