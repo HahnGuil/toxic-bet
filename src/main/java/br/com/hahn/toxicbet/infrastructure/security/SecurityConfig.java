@@ -52,6 +52,7 @@ public class SecurityConfig {
                 . securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                 .authorizeExchange(auth -> auth
                         .pathMatchers("/actuator/**", "/public/**").permitAll()
+                        .pathMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .anyExchange().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
