@@ -5,6 +5,6 @@ public enum Result {
     HOME_WIN,
     VISITING_WIN,
     DRAW,
-    NOT_STARTED;
+    NOT_STARTED
 
 }
