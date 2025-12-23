@@ -101,7 +101,7 @@ public final class DateTimeConverter {
         }
         return localDateTime.format(PARSER_NO_SECONDS);
     }
-    
+
     private static final DateTimeFormatter FORMATTER =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss z")
                     .withLocale(Locale.getDefault());
