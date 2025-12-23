@@ -77,30 +77,74 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MatchResponseDTO'
-        '400':
-          description: Invalid request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                successfullyCreateMatch:
+                  summary: Match successfully created
+                  value:
+                    matchId: 1
+                    homeTeamName: "Home Team Name"
+                    visitingTeamName: "Visiting Team Name"
+                    result: "NOT_STARTED"
+                    homeTeamScore: 0
+                    visitingTeamScore: 0
+                    matchTime: "DD/MM/AAAA HH:MM"
         '401':
           description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                missingToken:
+                  summary: Missing authentication token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Authentication token is required."
+                invalidToken:
+                  summary: Invalid or malformed token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Invalid authentication token."
+                expiredToken:
+                  summary: Expired token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Authentication token has expired."
+                authenticationFailed:
+                  summary: Authentication server connection failed
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Unable to authenticate. Please try again later."
         '404':
           description: Not Found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                homeTeamNotFound:
+                  summary: Home team not found
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Home team not found."
+                visitingTeamNotFound:
+                  summary: Visiting team not found
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Visiting team not found."
         '422':
           description: Matchmaking is not allowed.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                invalidResetType:
+                  summary: This will be thrown when the request does not contain the correct payload, having homeTeamId, visitingTeamID, and matchTime.
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "There is an invalid format in the request; please check the fields entered and try again."
+
     get:
       summary: Reactive stream of matches (SSE)
       description: Returns all existing matches and new creations of Server-Sent Events.
@@ -122,6 +166,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                missingToken:
+                  summary: Missing authentication token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Authentication token is required."
+                invalidToken:
+                  summary: Invalid or malformed token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Invalid authentication token."
+                expiredToken:
+                  summary: Expired token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Authentication token has expired."
+                authenticationFailed:
+                  summary: Authentication server connection failed
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Unable to authenticate. Please try again later."
         '500':
           description: Internal Server Error
           content:
@@ -192,6 +257,14 @@ components:
           enum: [ NOT_STARTED, HOME_WIN, VISITING_WIN, DRAW ]
           description: Match result
           example: "NOT_STARTED"
+        homeTeamScore:
+          type: integer
+          description: Score of the home team
+          example: 1
+        visitingTeamScore:
+          type: integer
+          description: Score of the visiting team
+          example: 1
         matchTime:
           type: string
           description: Date em time of match DD/MM/YYYY HH:MM
