@@ -174,16 +174,28 @@ components:
     MatchResponseDTO:
       type: object
       properties:
-        id:
+        matchId:
           type: integer
           format: int64
-          description: Match created ID (Long)
-          example: 123
-        message:
+          description: Match id (Long)
+          example: 1
+        homeTeamName:
           type: string
-          description: Success message of creation match
-          example: "Match success created"
-
+          description: Name of home team
+          example: "Brasil"
+        visitingTeamName:
+          type: string
+          description: Name of visiting team
+          example: "USA"
+        result:
+          type: string
+          enum: [ NOT_STARTED, HOME_WIN, VISITING_WIN, DRAW ]
+          description: Match result
+          example: "NOT_STARTED"
+        matchTime:
+          type: string
+          description: Date em time of match DD/MM/YYYY HH:MM
+          example: "21/12/2025 18:30"
     UserRequestDTO:
       type: object
       required:
