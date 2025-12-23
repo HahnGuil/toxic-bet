@@ -1,7 +1,6 @@
 package br.com.hahn.toxicbet.application.controller;
 
 import br.com.hahn.toxicbet.api.MatchApi;
-import br.com.hahn.toxicbet.application.mapper.MatchMapper;
 import br.com.hahn.toxicbet.application.service.MatchService;
 import br.com.hahn.toxicbet.model.MatchRequestDTO;
 import br.com.hahn.toxicbet.model.MatchResponseDTO;
