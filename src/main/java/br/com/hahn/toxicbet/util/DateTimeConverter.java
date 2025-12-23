@@ -90,6 +90,19 @@ public final class DateTimeConverter {
     }
 
     /**
+     * Formats a {@link LocalDateTime} into a string using the pattern dd/MM/yyyy HH:mm.
+     *
+     * @param localDateTime the LocalDateTime to format, may be {@code null}
+     * @return formatted date/time string or empty string if {@code localDateTime} is {@code null}
+     */
+    public static String formatLocalDateTime(LocalDateTime localDateTime) {
+        if (Objects.isNull(localDateTime)) {
+            return "";
+        }
+        return localDateTime.format(PARSER_NO_SECONDS);
+    }
+
+    /**
      * Reactive variant that returns a {@link Mono} emitting the parsed {@link LocalDateTime}.
      *
      * @param dateTimeStr the date/time string to parse

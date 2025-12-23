@@ -19,4 +19,11 @@ public class TeamService {
         log.info("TeamService: Find Team by id: {} at: {}", id, DateTimeConverter.formatInstantNow());
         return repository.findById(id);
     }
+
+    public Mono<String> findTeamNameById(Long id){
+        log.info("TeamService: Find the team name by id: {}, at: {}", id, DateTimeConverter.formatInstantNow());
+        return repository.findById(id)
+                .map(Team::getName)
+                .doOnNext(name -> log.info("Team name found: {}", name));
+    }
 }

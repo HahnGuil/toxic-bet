@@ -1,7 +1,6 @@
 package br.com.hahn.toxicbet.application.mapper;
 
 import br.com.hahn.toxicbet.domain.model.Match;
-import br.com.hahn.toxicbet.domain.model.enums.SuccessMessages;
 import br.com.hahn.toxicbet.model.MatchRequestDTO;
 import br.com.hahn.toxicbet.model.MatchResponseDTO;
 import br.com.hahn.toxicbet.util.DateTimeConverter;
@@ -16,8 +15,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class MatchMapper {
-
-    private MatchMapper(){}
 
     /**
      * Converts a MatchRequestDTO object to a Match entity.
@@ -40,14 +37,19 @@ public class MatchMapper {
      *
      * @author HahnGuil
      * @param match the Match entity to be converted
+     * @param homeTeamName the name of the home team
+     * @param visitingTeamName the name of the visiting team
      * @return the corresponding MatchResponseDTO object, or null if the input is null
      */
-    public MatchResponseDTO toDto(Match match){
-        if(match == null) return null;
+    public MatchResponseDTO toDto(Match match, String homeTeamName, String visitingTeamName) {
+        if (match == null) return null;
 
-        MatchResponseDTO response = new MatchResponseDTO();
-        response.setId(match.getId());
-        response.setMessage(SuccessMessages.REGISTER_MATCH.getMessage());
-        return response;
+        MatchResponseDTO dto = new MatchResponseDTO();
+        dto.setMatchId(match.getId());
+        dto.setHomeTeamName(homeTeamName);
+        dto.setVisitingTeamName(visitingTeamName);
+        dto.setMatchTime(DateTimeConverter.formatLocalDateTime(match.getMatchTime()));
+        dto.setResult(MatchResponseDTO.ResultEnum.valueOf(match.getResult().toString()));
+        return dto;
     }
 }

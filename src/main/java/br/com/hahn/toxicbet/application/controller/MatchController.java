@@ -26,14 +26,7 @@ import java.time.Duration;
 @Slf4j
 public class MatchController implements MatchApi {
 
-    /**
-     * TODO
-     * 1 - MUDAR O DTO DE RESPOSTA DA CRIAÇÃO PARA SUCESSO
-     * 2 - MUDAR O DTO DE RESPOSTA DO GET ALL PARA UM QUE TRAGA O NOME DOS TIMES E NÃO OS ID
-     * 3 - IMPLEMENTAR NO TEAM SERVER UM FLUXO NÃO BLOQUEANTE PARA PEGAR OS NOMES
-     */
-
-    private final Sinks.Many<Match> eventoSink;
+    private final Sinks.Many<MatchResponseDTO> eventoSink;
     private final MatchService matchService;
     private final MatchMapper mapper;
 
@@ -47,14 +40,17 @@ public class MatchController implements MatchApi {
     public Mono<ResponseEntity<MatchResponseDTO>> postCreateMatch(Mono<MatchRequestDTO> matchRequestDTO, ServerWebExchange exchange) {
         return DateTimeConverter.formatInstantNowReactive()
                 .doOnNext(ts -> log.info("MatchController: Starting creating match at: {}", ts))
-                .then(matchService.createMatchEntity(matchRequestDTO))
+                .then(matchService.createMatchDto(matchRequestDTO))
                 .doOnSuccess(eventoSink::tryEmitNext)
-                .map(match -> ResponseEntity.status(HttpStatus.CREATED).body(mapper.toDto(match)));
+                .doOnSuccess(dto -> log.info("Match created: {}", dto))
+                .map(dto -> ResponseEntity.status(HttpStatus.CREATED).body(dto));
     }
 
+
+
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<Match> streamMatches() {
-        Flux<Match> matches = matchService.findAll();
+    public Flux<MatchResponseDTO> streamMatches() {
+        Flux<MatchResponseDTO> matches = matchService.findAll();
         return Flux.merge(matches, eventoSink.asFlux())
                 .delayElements(Duration.ofSeconds(4));
     }

@@ -13,7 +13,8 @@ public enum ErrorMessages {
     HOME_TEAM_NOT_FOUND("Home Team not found, or not registered."),
     VISITING_TEAM_NOT_FOUND("Visiting Team not found, or not registered."),
     INVALID_DATE_MATCH_TIME("Invalid match date format. Match date must be DD/MM/YYYY HH:MM"),
-    GENERIC_INVALID_FORMAT("There is an invalid format in the request; please check the fields entered and try again.");
+    GENERIC_INVALID_FORMAT("There is an invalid format in the request; please check the fields entered and try again."),
+    UNAUTHORIZED_MESSAGE("Unauthorized user. Please log in or verify the access credentials for this resource.");
 
     private final String message;
 }

@@ -28,37 +28,36 @@ public class MatchService {
     private final MatchRepository repository;
     private final MatchMapper mapper;
 
-    public Mono<Match> createMatchEntity(Mono<MatchRequestDTO> matchRequestDTOMono) {
-        log.info("MatchService: Checking if the match creation date is valid");
-
+    public Mono<MatchResponseDTO> createMatchDto(Mono<MatchRequestDTO> matchRequestDTOMono) {
         return matchRequestDTOMono
                 .flatMap(this::isMatchTimeValid)
                 .flatMap(dto -> {
                     Mono<Team> home = teamService.findById(dto.getHomeTeamId())
-                            .switchIfEmpty(Mono.defer(() ->
-                                    DateTimeConverter.formatInstantNowReactive()
-                                            .doOnNext(ts -> log.error("MatchService: Home team not found: {} at: {}", dto.getHomeTeamId(), ts))
-                                            .then(Mono.error(new TeamNotFoundException(ErrorMessages.HOME_TEAM_NOT_FOUND.getMessage())))));
+                            .switchIfEmpty(Mono.error(new TeamNotFoundException(ErrorMessages.HOME_TEAM_NOT_FOUND.getMessage())));
 
                     Mono<Team> visiting = teamService.findById(dto.getVisitingTeamId())
-                            .switchIfEmpty(Mono.defer(() ->
-                                    DateTimeConverter.formatInstantNowReactive()
-                                            .doOnNext(ts -> log.error("MatchService: Visiting team not found: {} at: {}", dto.getVisitingTeamId(), ts))
-                                            .then(Mono.error(new TeamNotFoundException(ErrorMessages.VISITING_TEAM_NOT_FOUND.getMessage())))));
+                            .switchIfEmpty(Mono.error(new TeamNotFoundException(ErrorMessages.VISITING_TEAM_NOT_FOUND.getMessage())));
 
-                    log.info("MatchService: Save match at database at: {}", DateTimeConverter.formatInstantNow());
                     return Mono.zip(home, visiting)
                             .flatMap(tuple -> {
                                 var entity = mapper.toEntity(dto);
                                 entity.setResult(Result.NOT_STARTED);
-                                return repository.save(entity);
+                                return repository.save(entity)
+                                        .map(savedMatch -> mapper.toDto(savedMatch, tuple.getT1().getName(), tuple.getT2().getName()));
                             });
                 });
     }
 
-    public Flux<Match> findAll(){
+    public Flux<MatchResponseDTO> findAll(){
         log.info("MatchService: Find all matches at: {}", DateTimeConverter.formatInstantNow());
-        return repository.findAll();
+        return repository.findAll()
+                .flatMap(match -> {
+                    Mono<Team> home = teamService.findById(match.getHomeTeamId());
+                    Mono<Team> visiting = teamService.findById(match.getVisitingTeamId());
+
+                    return Mono.zip(home, visiting)
+                            .map(tuple -> mapper.toDto(match, tuple.getT1().getName(), tuple.getT2().getName()));
+                });
     }
 
     private Mono<MatchRequestDTO> isMatchTimeValid(MatchRequestDTO dto) {
