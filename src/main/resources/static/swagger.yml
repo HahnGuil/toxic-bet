@@ -9,15 +9,15 @@ info:
 tags:
   - name: users
     description: Operations for uses
-  - name: Team
+  - name: team
     description: Operations for teams
-  - name: Match
-    description: Operations for matchs
-  - name: Bet
+  - name: match
+    description: Operations for matches
+  - name: bet
     description: Operations for bets
-  - name: Betting pool
-    description: Operations for bettings pool
-  - name: Standings
+  - name: betting_pool
+    description: Operations for beatings pool
+  - name: standings
     description: Operations for standings
 
 paths:
@@ -48,17 +48,89 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ErrorResponseDTO'
         '401':
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
+                $ref: '#/components/schemas/ErrorResponseDTO'
+  /create:
+    post:
+      tags:
+        - match
+      summary: Operation for registering matches
+      description: It is necessary to register the matches automatically. To do this, you need to consult the table of team relationships to find the IDs. A match must have home team, away team, result set to NOT_STARTED, and the start time.
+      operationId: postCreateMatch
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchRequestDTO'
+      responses:
+        '201':
+          description: Match successfully registered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchResponseDTO'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '422':
+          description: Matchmaking is not allowed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+    get:
+      summary: Reactive stream of matches (SSE)
+      description: Returns all existing matches and new creations of Server-Sent Events.
+      operationId: getAll
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: Stream of matches (text/event-stream)
+          content:
+            text/event-stream:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MatchResponseDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
 components:
   schemas:
-    ErrorResponse:
+    ErrorResponseDTO:
       type: object
       properties:
         timestamp:
@@ -70,6 +142,47 @@ components:
           type: string
           description: Error message description
           example: "Unauthorized access"
+    SuccessResponseDTO:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Success message description
+          example: "Success created the operation"
+    MatchRequestDTO:
+      type: object
+      required:
+        - homeTeamId
+        - visitingTeamId
+        - matchTime
+      properties:
+        homeTeamId:
+          type: integer
+          format: int64
+          description: Home team ID (Long)
+          example: 1
+        visitingTeamId:
+          type: integer
+          format: int64
+          description: Visiting team ID (Long)
+          example: 2
+        matchTime:
+          type: string
+          description: Date and time of the match in the format DD/MM/YYYY HH:MM
+          pattern: "^(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[0-2])/[0-9]{4} ([01][0-9]|2[0-3]):[0-5][0-9]$"
+          example: "21/12/2025 18:30"
+    MatchResponseDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Match created ID (Long)
+          example: 123
+        message:
+          type: string
+          description: Success message of creation match
+          example: "Match success created"
 
     UserRequestDTO:
       type: object
@@ -86,20 +199,17 @@ components:
           type: string
           description: User name to be registered
           example: John Coffee
-
     UserResponseDTO:
       type: object
       properties:
         message:
           type: string
           example: User successfully registered
-
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
       description: JWT token generated by the authentication server to be validated in the application.
-
 security:
   - bearerAuth: []
