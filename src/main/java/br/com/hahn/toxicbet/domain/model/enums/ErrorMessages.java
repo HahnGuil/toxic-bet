@@ -14,7 +14,9 @@ public enum ErrorMessages {
     VISITING_TEAM_NOT_FOUND("Visiting Team not found, or not registered."),
     INVALID_DATE_MATCH_TIME("Invalid match date format. Match date must be DD/MM/YYYY HH:MM"),
     GENERIC_INVALID_FORMAT("There is an invalid format in the request; please check the fields entered and try again."),
-    UNAUTHORIZED_MESSAGE("Unauthorized user. Please log in or verify the access credentials for this resource.");
+    UNAUTHORIZED_MESSAGE("Unauthorized user. Please log in or verify the access credentials for this resource."),
+    TEAM_MUST_BE_DIFFERENT("The home team and the visiting team cannot be the same."),
+    CONFLICT_MATCH_TIME("One of the teams in the match already has a game scheduled for this date and time.");
 
     private final String message;
 }
