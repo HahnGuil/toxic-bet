@@ -6,6 +6,7 @@ import br.com.hahn.toxicbet.domain.exception.TeamNotFoundException;
 import br.com.hahn.toxicbet.domain.model.Match;
 import br.com.hahn.toxicbet.domain.model.Team;
 import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
+import br.com.hahn.toxicbet.domain.model.enums.Result;
 import br.com.hahn.toxicbet.domain.repository.MatchRepository;
 import br.com.hahn.toxicbet.model.MatchRequestDTO;
 import br.com.hahn.toxicbet.model.MatchResponseDTO;
@@ -49,6 +50,7 @@ public class MatchService {
                     return Mono.zip(home, visiting)
                             .flatMap(tuple -> {
                                 var entity = mapper.toEntity(dto);
+                                entity.setResult(Result.NOT_STARTED);
                                 return repository.save(entity);
                             });
                 });
