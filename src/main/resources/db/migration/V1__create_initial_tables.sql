@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS match (
                                      id BIGSERIAL PRIMARY KEY,
                                      home_team_id BIGINT NOT NULL,
                                      visiting_team_id BIGINT NOT NULL,
+                                     home_team_score INTEGER,
+                                     visiting_team_score INTEGER,
                                      result VARCHAR(50),
                                      match_time TIMESTAMP NOT NULL,
                                      CONSTRAINT fk_home_team FOREIGN KEY (home_team_id) REFERENCES teams(id),

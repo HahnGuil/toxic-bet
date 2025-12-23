@@ -23,6 +23,12 @@ public class Match {
     @Column("visiting_team_id")
     private Long visitingTeamId;
 
+    @Column("home_team_score")
+    private Integer homeTeamScore;
+
+    @Column("visiting_team_score")
+    private Integer visitingTeamScore;
+
     @Column("result")
     private Result result;
 

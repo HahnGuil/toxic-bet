@@ -42,8 +42,6 @@ public class MatchController implements MatchApi {
                 .map(dto -> ResponseEntity.status(HttpStatus.CREATED).body(dto));
     }
 
-
-
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<MatchResponseDTO> streamMatches() {
         Flux<MatchResponseDTO> matches = matchService.findAll();
