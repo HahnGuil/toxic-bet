@@ -1,8 +1,6 @@
 package br.com.hahn.toxicbet.application.service;
 
 import br.com.hahn.toxicbet.application.mapper.UserMapper;
-import br.com.hahn.toxicbet.domain.model.SuccessMessages;
-import br.com.hahn.toxicbet.domain.model.Users;
 import br.com.hahn.toxicbet.domain.repository.UserRepository;
 import br.com.hahn.toxicbet.model.UserRequestDTO;
 import br.com.hahn.toxicbet.model.UserResponseDTO;
