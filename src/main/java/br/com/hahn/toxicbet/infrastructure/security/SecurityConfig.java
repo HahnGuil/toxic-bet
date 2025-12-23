@@ -1,6 +1,11 @@
 package br.com.hahn.toxicbet.infrastructure.security;
 
+import br.com.hahn.toxicbet.domain.exception.UserNotAuthorizedException;
+import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
+import br.com.hahn.toxicbet.infrastructure.security.exception.CustomAccessDeniedHandler;
+import br.com.hahn.toxicbet.infrastructure.security.exception.CustomAuthenticationEntryPointHandler;
 import io.netty.channel.ChannelOption;
+import lombok.RequiredArgsConstructor;
 import lombok. extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
@@ -31,13 +36,14 @@ import java.util.List;
 @EnableWebFluxSecurity
 @EnableCaching
 @Slf4j
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final CustomAuthenticationEntryPointHandler customAuthenticationEntryPointHandler;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")
     private String jwkSetUri;
-
-    @Value("${spring.security.oauth2.resourceserver.jwt.jwk-cache-lifespan:3600000}")
-    private long jwkCacheLifespan;
 
     @Value("${spring.security.oauth2.resourceserver.jwt.connect-timeout:30000}")
     private int connectTimeout;
@@ -55,6 +61,9 @@ public class SecurityConfig {
                         .pathMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .anyExchange().authenticated()
                 )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(customAuthenticationEntryPointHandler)
+                        .accessDeniedHandler(customAccessDeniedHandler))
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt
                                 .jwtDecoder(customJwtDecoder())
@@ -85,8 +94,7 @@ public class SecurityConfig {
             return jwtDecoder;
         } catch (Exception e) {
             log.error("Error creating JWT Decoder", e);
-//            TODO - TROCAR POR UMA EXCEÇÃO PERSONALLIZADA
-            throw new RuntimeException("Failed to configure JWT Decoder", e);
+            throw new UserNotAuthorizedException(ErrorMessages.UNAUTHORIZED_MESSAGE.getMessage());
         }
     }
 
