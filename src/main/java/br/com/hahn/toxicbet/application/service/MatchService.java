@@ -3,7 +3,6 @@ package br.com.hahn.toxicbet.application.service;
 import br.com.hahn.toxicbet.application.mapper.MatchMapper;
 import br.com.hahn.toxicbet.domain.exception.InvalidMatchTimeException;
 import br.com.hahn.toxicbet.domain.exception.TeamNotFoundException;
-import br.com.hahn.toxicbet.domain.model.Match;
 import br.com.hahn.toxicbet.domain.model.Team;
 import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
 import br.com.hahn.toxicbet.domain.model.enums.Result;

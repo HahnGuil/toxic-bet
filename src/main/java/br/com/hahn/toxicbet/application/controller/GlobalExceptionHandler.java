@@ -35,7 +35,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Mono<ResponseEntity<ErrorResponseDTO>> handlerValidationFields(MethodArgumentNotValidException ex){
         var message = ErrorMessages.GENERIC_INVALID_FORMAT.getMessage();
-        var error = createErrorResponse(message, getInstanteNow());
+        var error = createErrorResponse(message + ex, getInstanteNow());
         return Mono.just(ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error));
     }
 
@@ -48,7 +48,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public Mono<ResponseEntity<ErrorResponseDTO>> handlerAccessDeniedExecption(AccessDeniedException ex){
         var message = ErrorMessages.UNAUTHORIZED_MESSAGE.getMessage();
-        var error = createErrorResponse(message, getInstanteNow());
+        var error = createErrorResponse(message + ex, getInstanteNow());
         return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error));
     }
 
