@@ -55,102 +55,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDTO'
-  /create:
-    post:
-      tags:
-        - match
-      summary: Operation for registering matches
-      description: It is necessary to register the matches automatically. To do this, you need to consult the table of team relationships to find the IDs. A match must have home team, away team, result set to NOT_STARTED, and the start time.
-      operationId: postCreateMatch
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MatchRequestDTO'
-      responses:
-        '201':
-          description: Match successfully registered.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MatchResponseDTO'
-              examples:
-                successfullyCreateMatch:
-                  summary: Match successfully created
-                  value:
-                    matchId: 1
-                    homeTeamName: "Home Team Name"
-                    visitingTeamName: "Visiting Team Name"
-                    result: "NOT_STARTED"
-                    homeTeamScore: 0
-                    visitingTeamScore: 0
-                    matchTime: "DD/MM/AAAA HH:MM"
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponseDTO'
-              examples:
-                missingToken:
-                  summary: Missing authentication token
-                  value:
-                    timestamp: "2024-12-08T19:30:00Z"
-                    message: "Authentication token is required."
-                invalidToken:
-                  summary: Invalid or malformed token
-                  value:
-                    timestamp: "2024-12-08T19:30:00Z"
-                    message: "Invalid authentication token."
-                expiredToken:
-                  summary: Expired token
-                  value:
-                    timestamp: "2024-12-08T19:30:00Z"
-                    message: "Authentication token has expired."
-                authenticationFailed:
-                  summary: Authentication server connection failed
-                  value:
-                    timestamp: "2024-12-08T19:30:00Z"
-                    message: "Unable to authenticate. Please try again later."
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponseDTO'
-              examples:
-                homeTeamNotFound:
-                  summary: Home team not found
-                  value:
-                    timestamp: "2024-12-08T19:30:00Z"
-                    message: "Home team not found."
-                visitingTeamNotFound:
-                  summary: Visiting team not found
-                  value:
-                    timestamp: "2024-12-08T19:30:00Z"
-                    message: "Visiting team not found."
-        '422':
-          description: Matchmaking is not allowed.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponseDTO'
-              examples:
-                invalidResetType:
-                  summary: This will be thrown when the request does not contain the correct payload, having homeTeamId, visitingTeamID, and matchTime.
-                  value:
-                    timestamp: "2024-12-08T19:30:00Z"
-                    message: "There is an invalid format in the request; please check the fields entered and try again."
-
+  /match:
     get:
       summary: Reactive stream of matches (SSE)
       description: Returns all existing matches and new creations of Server-Sent Events.
-      operationId: getAll
+      operationId: streamAllMatches
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       responses:
         '200':
           description: Stream of matches (text/event-stream)
@@ -193,6 +104,116 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDTO'
+  /scores:
+    get:
+      summary: Operation to retrieve the results of ongoing matches.
+      description: This operation will bring every second the updated result of the matches that have the result = IN_PROGRESS, informing the match ID, the names of the participating teams and the score separately.
+      operationId: getStreamScores
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Stream of matches (text/event-stream)
+          content:
+            text/event-stream:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MatchResponseDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                missingToken:
+                  summary: Missing authentication token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Authentication token is required."
+                invalidToken:
+                  summary: Invalid or malformed token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Invalid authentication token."
+                expiredToken:
+                  summary: Expired token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Authentication token has expired."
+                authenticationFailed:
+                  summary: Authentication server connection failed
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Unable to authenticate. Please try again later."
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+  /create:
+    post:
+      tags:
+        - match
+      summary: Operation for registering matches
+      description: It is necessary to register the matches automatically. To do this, you need to consult the table of team relationships to find the IDs. A match must have home team, away team, result set to NOT_STARTED, and the start time.
+      operationId: postCreateMatch
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchRequestDTO'
+      responses:
+        '201':
+          description: Match successfully registered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchResponseDTO'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not Found
+        '422':
+          description: Matchmaking is not allowed.
+  /{matchId}/score:
+    patch:
+      tags:
+        - match
+      summary: Update match score
+      description: Updates the score of an ongoing match
+      operationId: patchUpdateMatchScore
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateScoreRequestDTO'
+      responses:
+        '200':
+          description: Score successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchResponseDTO'
+        '404':
+          description: Match not found
+        '422':
+          description: Cannot update score for finished match
 components:
   schemas:
     ErrorResponseDTO:
@@ -248,19 +269,14 @@ components:
           type: string
           description: Name of home team
           example: "Brasil"
-        visitingTeamName:
-          type: string
-          description: Name of visiting team
-          example: "USA"
-        result:
-          type: string
-          enum: [ NOT_STARTED, HOME_WIN, VISITING_WIN, DRAW ]
-          description: Match result
-          example: "NOT_STARTED"
         homeTeamScore:
           type: integer
           description: Score of the home team
           example: 1
+        visitingTeamName:
+          type: string
+          description: Name of visiting team
+          example: "USA"
         visitingTeamScore:
           type: integer
           description: Score of the visiting team
@@ -269,6 +285,11 @@ components:
           type: string
           description: Date em time of match DD/MM/YYYY HH:MM
           example: "21/12/2025 18:30"
+        result:
+          type: string
+          enum: [ NOT_STARTED, HOME_WIN, VISITING_WIN, DRAW, IN_PROGRESS ]
+          description: Match result
+          example: "NOT_STARTED"
     UserRequestDTO:
       type: object
       required:
@@ -290,6 +311,22 @@ components:
         message:
           type: string
           example: User successfully registered
+    UpdateScoreRequestDTO:
+      type: object
+      required:
+        - homeTeamScore
+        - visitingTeamScore
+      properties:
+        homeTeamScore:
+          type: integer
+          minimum: 0
+          description: Score of the home team
+          example: 2
+        visitingTeamScore:
+          type: integer
+          minimum: 0
+          description: Score of the visiting team
+          example: 1
   securitySchemes:
     bearerAuth:
       type: http
