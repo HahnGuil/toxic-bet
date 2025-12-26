@@ -19,34 +19,44 @@ import java.time.ZoneOffset;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(InvalidMatchTimeException.class)
-    public Mono<ResponseEntity<ErrorResponseDTO>> handlerInvalidMatchTimeException(InvalidMatchTimeException ex){
+//    401
+    @ExceptionHandler(UserNotAuthorizedException.class)
+    public Mono<ResponseEntity<ErrorResponseDTO>> handlerUserNotAuthorizedException(UserNotAuthorizedException ex){
         var error = createErrorResponse(ex.getMessage(), getInstanteNow());
-        return Mono.just(ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error));
+        return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error));
     }
 
+//    404
     @ExceptionHandler(TeamNotFoundException.class)
     public Mono<ResponseEntity<ErrorResponseDTO>> handlerTeamNotFoundException(TeamNotFoundException ex){
         var error = createErrorResponse(ex.getMessage(), getInstanteNow());
         return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(error));
     }
 
+    @ExceptionHandler(MatchNotFoundException.class)
+    public Mono<ResponseEntity<ErrorResponseDTO>> handlerMatchNotFoundException(MatchNotFoundException ex){
+        var error = createErrorResponse(ex.getMessage(), getInstanteNow());
+        return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(error));
+    }
+
+//    409
+    @ExceptionHandler(ConflictMatchTimeException.class)
+    public Mono<ResponseEntity<ErrorResponseDTO>> handlerConflictMatchTimeException(ConflictMatchTimeException ex){
+        var error = createErrorResponse(ex.getMessage(), getInstanteNow());
+        return Mono.just(ResponseEntity.status(HttpStatus.CONFLICT).body(error));
+    }
+
+//    422
+    @ExceptionHandler(InvalidMatchTimeException.class)
+    public Mono<ResponseEntity<ErrorResponseDTO>> handlerInvalidMatchTimeException(InvalidMatchTimeException ex){
+        var error = createErrorResponse(ex.getMessage(), getInstanteNow());
+        return Mono.just(ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error));
+    }
+
     @ExceptionHandler(InvalidTeamException.class)
     public Mono<ResponseEntity<ErrorResponseDTO>> handlerInvalidTeamException(InvalidTeamException ex){
         var error = createErrorResponse(ex.getMessage(), getInstanteNow());
         return Mono.just(ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error));
-    }
-
-    @ExceptionHandler(ConflitMathcTimeException.class)
-    public Mono<ResponseEntity<ErrorResponseDTO>> handlerConflictMatchTimeException(ConflitMathcTimeException ex){
-        var error = createErrorResponse(ex.getMessage(), getInstanteNow());
-        return Mono.just(ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error));
-    }
-
-    @ExceptionHandler(UserNotAuthorizedException.class)
-    public Mono<ResponseEntity<ErrorResponseDTO>> handlerUserNotAuthorizedException(UserNotAuthorizedException ex){
-        var error = createErrorResponse(ex.getMessage(), getInstanteNow());
-        return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error));
     }
 
     @ExceptionHandler(WebExchangeBindException.class)
@@ -56,6 +66,13 @@ public class GlobalExceptionHandler {
         return Mono.just(ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error));
     }
 
+    @ExceptionHandler(InvalidMatchStateException.class)
+    public Mono<ResponseEntity<ErrorResponseDTO>> handlerInvalidMatchStateException(InvalidMatchStateException ex){
+        var error = createErrorResponse(ex.getMessage(), getInstanteNow());
+        return Mono.just(ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error));
+    }
+
+//    500
     @ExceptionHandler(Exception.class)
     public Mono<ResponseEntity<ErrorResponseDTO>> handlerGenericException(Exception ex){
         log.error("GlobalHandler: A generic error was triggered. This is the trace: {}", ex.getMessage());
@@ -63,6 +80,7 @@ public class GlobalExceptionHandler {
         return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error));
     }
 
+//    Util
     private ErrorResponseDTO createErrorResponse(String message, Instant instantNow){
         var error = new ErrorResponseDTO();
         error.setMessage(message);
