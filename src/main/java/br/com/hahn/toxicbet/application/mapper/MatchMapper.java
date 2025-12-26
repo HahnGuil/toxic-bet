@@ -54,24 +54,4 @@ public class MatchMapper {
         dto.setResult(MatchResponseDTO.ResultEnum.valueOf(match.getResult().toString()));
         return dto;
     }
-
-    /**
-     * Converts a Match entity to a MatchResponseDTO but only the id and scores/
-     *
-     * @author HahnGuil
-     * @param match the Match entity
-     * @param homeTeamName Name of home team
-     * @param visitingTeamName name of visiting team
-     * @return the MatchResponseDTO whit de id and score.
-     */
-    public MatchResponseDTO toDtoOnlyScore(Match match, String homeTeamName, String visitingTeamName){
-        if(match == null) return null;
-
-        MatchResponseDTO dto = new MatchResponseDTO();
-        dto.setMatchId(match.getId());
-        dto.setHomeTeamScore(match.getHomeTeamScore());
-        dto.setVisitingTeamScore(match.getVisitingTeamScore());
-
-        return dto;
-    }
 }

@@ -63,13 +63,6 @@ public class MatchService {
     }
 
     /**
-     * Retrieves matches with score
-     *
-     * @author HahnGuil
-     *
-     */
-
-    /**
      * Updates match status to "IN_PROGRESS" if the match time has passed.
      *
      * @author HahnGuil
