@@ -20,6 +20,12 @@ import reactor.core.publisher.Sinks;
 
 import java.time.Duration;
 
+/**
+ * Controller class responsible for handling HTTP requests related to matches.
+ * Implements the {@link MatchApi} interface.
+ *
+ * @author HahnGuil
+ */
 @RestController
 @RequestMapping("/match")
 @Slf4j
@@ -29,11 +35,25 @@ public class MatchController implements MatchApi {
 
     private final MatchService matchService;
 
+    /**
+     * Constructor for MatchController.
+     *
+     * @author HahnGuil
+     * @param matchService The service responsible for match-related operations.
+     */
     public MatchController(MatchService matchService) {
         this.matchService = matchService;
         this.matchSink = Sinks.many().multicast().onBackpressureBuffer();
     }
 
+    /**
+     * Handles the creation of a new match.
+     *
+     * @author HahnGuil
+     * @param matchRequestDTO A {@link Mono} containing the match creation request data.
+     * @param exchange        The {@link ServerWebExchange} for the current request.
+     * @return A {@link Mono} containing the {@link ResponseEntity} with the created match details.
+     */
     @Override
     public Mono<ResponseEntity<MatchResponseDTO>> postCreateMatch(Mono<MatchRequestDTO> matchRequestDTO, ServerWebExchange exchange) {
         return DateTimeConverter.formatInstantNowReactive()
@@ -44,6 +64,12 @@ public class MatchController implements MatchApi {
                 .map(dto -> ResponseEntity.status(HttpStatus.CREATED).body(dto));
     }
 
+    /**
+     * Streams all matches as a Server-Sent Events (SSE) stream.
+     *
+     * @author HahnGuil
+     * @return A {@link Flux} of {@link MatchResponseDTO} representing the match data.
+     */
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<MatchResponseDTO> streamAllMatches() {
         log.info("MatchController: Get all matches stream at: {}", DateTimeConverter.formatInstantNow());
@@ -52,6 +78,15 @@ public class MatchController implements MatchApi {
                 .delayElements(Duration.ofSeconds(4));
     }
 
+    /**
+     * Updates the score of an existing match.
+     *
+     * @author HahnGuil
+     * @param matchId              The ID of the match to update.
+     * @param updateScoreRequestDTO A {@link Mono} containing the score update request data.
+     * @param exchange             The {@link ServerWebExchange} for the current request.
+     * @return A {@link Mono} containing the {@link ResponseEntity} with the updated match details.
+     */
     @Override
     public Mono<ResponseEntity<MatchResponseDTO>> patchUpdateMatchScore(Long matchId, Mono<UpdateScoreRequestDTO> updateScoreRequestDTO, ServerWebExchange exchange) {
         return DateTimeConverter.formatInstantNowReactive()
@@ -67,6 +102,12 @@ public class MatchController implements MatchApi {
                 .map(ResponseEntity::ok);
     }
 
+    /**
+     * Streams scores of matches that are currently in progress as a Server-Sent Events (SSE) stream.
+     *
+     * @author HahnGuil
+     * @return A {@link Flux} of {@link MatchResponseDTO} representing the match scores.
+     */
     @GetMapping(value = "/scores", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<MatchResponseDTO> getStreamScores(){
         log.info("MatchService: Get matches in IN-PROGRESS with scores at: {}", DateTimeConverter.formatInstantNow());
