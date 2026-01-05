@@ -214,6 +214,81 @@ paths:
           description: Match not found
         '422':
           description: Cannot update score for finished match
+  /bet:
+    post:
+      tags:
+        - bet
+      summary: Operation to register users' bets.
+      description: A user can place one bet per match, containing one of the result types HOME_TEAM, DRAW, or VISITING_TEAM.
+      operationId: postRegisterBet
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BetRequestDTO'
+      responses:
+        '201':
+          description: User successfully registered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BetResponseDTO'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '404':
+          description: Resource not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                matchNotFound:
+                  summary: Match not found
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "The reported match was not found."
+                userNotFound:
+                  summary: user not found
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "User not found, please register."
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                matchNotFound:
+                  summary: Bet already placed
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "The user has already placed a bet for this match."
+        '422':
+          description: Betting is not allowed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                matchAlreadyStarted:
+                  summary: User has already placed a bet.
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "It is not permitted to place a bet on a match that has already started."
 components:
   schemas:
     ErrorResponseDTO:
@@ -327,6 +402,50 @@ components:
           minimum: 0
           description: Score of the visiting team
           example: 1
+    BetRequestDTO:
+      type: object
+      required:
+        - matchId
+        - result
+        - odds
+      properties:
+        matchId:
+          type: integer
+          format: int64
+          description: Match ID for which the bet is being placed.
+          example: 2
+        result:
+          type: string
+          enum: [ HOME_WIN, VISITING_WIN, DRAW ]
+          description: Match result
+          example: "HOME_WIN"
+        odds:
+          type: number
+          format: double
+          description: The odds value that will be used to calculate the user's score.
+          example: 1.75
+    BetResponseDTO:
+      type: object
+      properties:
+        betId:
+          type: integer
+          format: int64
+          description: ID of the bet placed by the user.
+          example: 1
+        matchId:
+          type: integer
+          format: int64
+          description: Match ID where the user placed the bet.
+          example: 1
+        result:
+          type: string
+          description: The result the user bet on.
+          example: "HOME_WIN"
+        odds:
+          type: number
+          format: double
+          description: Odds the user will receive if they win the bet.
+          example: 2.45
   securitySchemes:
     bearerAuth:
       type: http
