@@ -18,7 +18,9 @@ public enum ErrorMessages {
     TEAM_MUST_BE_DIFFERENT("The home team and the visiting team cannot be the same."),
     CONFLICT_MATCH_TIME("One of the teams in the match already has a game scheduled for this date and time."),
     CAN_NOT_UPDATE_MATCH("Cannot update score for match not in progress"),
-    MATCH_NOT_FOUND("Match not found for this id: ");
+    MATCH_NOT_FOUND("Match not found for this id: "),
+    USER_NOT_FOUND("No user was found for the email address: "),
+    MATCH_NOT_OPEN_TO_BETS("This match is not eligible for betting.");
 
     private final String message;
 }

@@ -1,0 +1,11 @@
+package br.com.hahn.toxicbet.domain.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+public class MatchNotOpenForBettingException extends RuntimeException {
+    public MatchNotOpenForBettingException(String message) {
+        super(message);
+    }
+}

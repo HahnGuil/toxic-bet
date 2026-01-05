@@ -41,6 +41,12 @@ public class GlobalExceptionHandler {
         return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(error));
     }
 
+    @ExceptionHandler(UserNotFoundException.class)
+    public Mono<ResponseEntity<ErrorResponseDTO>> handlerUserNotFoundException(UserNotFoundException ex){
+        var error = createErrorResponse(ex.getMessage(), getInstanteNow());
+        return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(error));
+    }
+
     @ExceptionHandler(MatchNotFoundException.class)
     public Mono<ResponseEntity<ErrorResponseDTO>> handlerMatchNotFoundException(MatchNotFoundException ex){
         var error = createErrorResponse(ex.getMessage(), getInstanteNow());
@@ -57,6 +63,12 @@ public class GlobalExceptionHandler {
 //    422
     @ExceptionHandler(InvalidMatchTimeException.class)
     public Mono<ResponseEntity<ErrorResponseDTO>> handlerInvalidMatchTimeException(InvalidMatchTimeException ex){
+        var error = createErrorResponse(ex.getMessage(), getInstanteNow());
+        return Mono.just(ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error));
+    }
+
+    @ExceptionHandler(MatchNotOpenForBettingException.class)
+    public Mono<ResponseEntity<ErrorResponseDTO>> handlerMatchNotOpenForBettingException(MatchNotOpenForBettingException ex){
         var error = createErrorResponse(ex.getMessage(), getInstanteNow());
         return Mono.just(ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error));
     }
