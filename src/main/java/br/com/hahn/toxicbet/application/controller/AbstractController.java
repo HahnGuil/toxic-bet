@@ -4,6 +4,7 @@ import br.com.hahn.toxicbet.infrastructure.service.JwtService;
 import br.com.hahn.toxicbet.util.DateTimeConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 /**
@@ -36,5 +37,24 @@ public abstract class AbstractController {
                     log.warn("AbstractController: Continuing despite OAuth check failure for user email: {} at: {}", email, DateTimeConverter.formatInstantNow());
                     return Mono.empty();
                 });
+    }
+
+    /**
+     * Extracts the user ID from the JWT token.
+     *
+     * @param exchange The server exchange containing the authentication context.
+     * @return A {@link Mono} containing the user ID as UUID.
+     */
+    protected Mono<String> extractUserIdFromToken(ServerWebExchange exchange) {
+        return Mono.defer(() -> exchange.getPrincipal()
+                .cast(org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken.class)
+                .map(jwtAuth -> {
+                    var jwt = jwtAuth.getToken();
+                    String userEmail = jwt.getSubject();
+                    log.debug("AbstractController: Extracted user_id from token: {}", userEmail);
+                    return userEmail;
+                })
+                .switchIfEmpty(Mono.error(new IllegalStateException("User ID not found in token")))
+        );
     }
 }
