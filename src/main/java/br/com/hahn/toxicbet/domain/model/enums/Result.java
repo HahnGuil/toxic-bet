@@ -6,5 +6,6 @@ public enum Result {
     VISITING_WIN,
     DRAW,
     NOT_STARTED,
-    IN_PROGRESS
+    IN_PROGRESS,
+    OPEN_FOR_BETTING
 }

@@ -111,6 +111,30 @@ public class MatchService {
     }
 
     /**
+     * Retrieves a match by its ID.
+     *
+     * <p>
+     * This method performs the following steps:
+     * <ol>
+     *     <li>Logs the start of the match retrieval process with the provided ID and current timestamp.</li>
+     *     <li>Attempts to find the match in the repository by its ID.</li>
+     *     <li>If an error occurs during the retrieval, logs the error and throws a {@link MatchNotFoundException}.</li>
+     *     <li>If no match is found, returns a {@link Mono} error with a {@link MatchNotFoundException}.</li>
+     * </ol>
+     * </p>
+     *
+     * @author HahnGuil
+     * @param id the ID of the match to be retrieved
+     * @return a {@link Mono} emitting the {@link Match} if found, or an error if not found
+     */
+    public Mono<Match> findById(Long id){
+        log.info("MatchService: Find match by id: {}, at: {}", id, DateTimeConverter.formatInstantNow());
+        return repository.findById(id)
+                .doOnError(error -> log.info("MatchService: Match not found to this id: {}. Throw the MatchNotFoudException at: {}", id, DateTimeConverter.formatInstantNow()))
+                .switchIfEmpty(Mono.error(new MatchNotFoundException(ErrorMessages.MATCH_NOT_FOUND.getMessage())));
+    }
+
+    /**
      * Fetches the teams and creates a new match.
      *
      * @author HahnGuil
