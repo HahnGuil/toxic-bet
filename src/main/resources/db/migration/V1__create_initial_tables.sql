@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
                                      email VARCHAR(255) NOT NULL UNIQUE
 );
 
--- Teams table: stores teams with BIGSERIAL id
+-- Teams table: stores teams with BIG SERIAL id
 CREATE TABLE IF NOT EXISTS teams (
                                      id BIGSERIAL PRIMARY KEY,
                                      name VARCHAR(255) NOT NULL UNIQUE
@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS bet (
                                    user_id UUID NOT NULL,
                                    match_id BIGINT NOT NULL,
                                    result VARCHAR(50) NOT NULL,
+                                    bet_odds DOUBLE PRECISION,
                                    CONSTRAINT fk_bet_user FOREIGN KEY (user_id) REFERENCES users(id),
                                    CONSTRAINT fk_bet_match FOREIGN KEY (match_id) REFERENCES match(id),
                                    CONSTRAINT uq_user_match_bet UNIQUE (user_id, match_id)
@@ -57,22 +58,22 @@ CREATE TABLE IF NOT EXISTS standings (
                                          CONSTRAINT fk_standings_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
--- Oddie table: stores odds for a match, one record per match (match_id must be unique)
--- id: BIGSERIAL primary key
+-- Odds table: stores odds for a match, one record per match (match_id must be unique)
+-- id: BIG SERIAL primary key
 -- match_id: references match(id) and must be unique (no duplicate match entries)
 -- total_bets_for_match: integer count of bets aggregated for the match
 -- odd_home_team: double precision odd for home team
 -- odd_visiting_team: double precision odd for visiting team
 -- odd_draw: double precision odd for draw outcome
-CREATE TABLE IF NOT EXISTS oddie (
+CREATE TABLE IF NOT EXISTS odds (
                                      id BIGSERIAL PRIMARY KEY,
                                      match_id BIGINT NOT NULL,
                                      total_bets_for_match INTEGER,
                                      odd_home_team DOUBLE PRECISION,
                                      odd_visiting_team DOUBLE PRECISION,
                                      odd_draw DOUBLE PRECISION,
-                                     CONSTRAINT fk_oddie_match FOREIGN KEY (match_id) REFERENCES match(id),
-                                     CONSTRAINT uq_oddie_match UNIQUE (match_id)
+                                     CONSTRAINT fk_odds_match FOREIGN KEY (match_id) REFERENCES match(id),
+                                     CONSTRAINT uq_odds_match UNIQUE (match_id)
 );
 
 -- Indexes for performance
@@ -81,5 +82,5 @@ CREATE INDEX IF NOT EXISTS idx_bet_match_id ON bet(match_id);
 CREATE INDEX IF NOT EXISTS idx_match_time ON match(match_time);
 CREATE INDEX IF NOT EXISTS idx_standings_user_id ON standings(user_id);
 
--- Index specifically for oddie.match_id for efficient lookups
-CREATE INDEX IF NOT EXISTS idx_oddie_match_id ON oddie(match_id);
+-- Index specifically for odds.match_id for efficient lookups
+CREATE INDEX IF NOT EXISTS idx_odds_match_id ON odds(match_id);

@@ -7,9 +7,9 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Data
-@Table("oddie")
+@Table("odds")
 @RequiredArgsConstructor
-public class Oddie {
+public class Odds {
 
     @Id
     private Long id;

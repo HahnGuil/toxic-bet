@@ -25,4 +25,7 @@ public class Bet {
 
     @Column("result")
     private Result result;
+
+    @Column("bet_odds")
+    private Double betOdds;
 }
