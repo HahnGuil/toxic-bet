@@ -18,15 +18,7 @@ public class UserMapper {
         user.setEmail(dto.getEmail());
         return user;
     }
-
-    public UserRequestDTO toDTO(Users user) {
-        if (user == null) return null;
-        UserRequestDTO dto = new UserRequestDTO();
-        dto.setName(user.getName());
-        dto.setEmail(user.getEmail());
-        return dto;
-    }
-
+    
     public UserResponseDTO toResponseDTO(Users user) {
         if (user == null) return null;
         UserResponseDTO resp = new UserResponseDTO();
