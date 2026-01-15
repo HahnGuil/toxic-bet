@@ -16,13 +16,6 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
-/**
- * Global exception handler for the application.
- * Uses Spring's ControllerAdvice to capture and handle specific exceptions,
- * returning appropriate HTTP status codes and error details in the response.
- *
- * @author HahnGuil
- */
 @Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {

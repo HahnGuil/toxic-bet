@@ -25,25 +25,6 @@ public class BetController extends AbstractController implements BetApi {
         this.betService = betService;
     }
 
-    /**
-     * Handles the HTTP POST request to register a new bet.
-     *
-     * <p>
-     * This method performs the following steps:
-     * <ol>
-     *     <li>Extracts the user ID from the JWT token in the {@link ServerWebExchange}.</li>
-     *     <li>Logs the start of the bet creation process with the current timestamp.</li>
-     *     <li>Delegates to the {@link BetService#placeBet(Mono, String)} method to process the bet.</li>
-     *     <li>Logs the successful placement of the bet with the current timestamp.</li>
-     *     <li>Wraps the resulting {@link BetResponseDTO} in a {@link ResponseEntity} with HTTP status 201 (Created).</li>
-     * </ol>
-     * </p>
-     *
-     * @author HahnGuil
-     * @param betRequestDTO a {@link Mono} emitting the {@link BetRequestDTO} containing the bet details.
-     * @param exchange the {@link ServerWebExchange} containing the HTTP request and response.
-     * @return a {@link Mono} emitting a {@link ResponseEntity} containing the {@link BetResponseDTO} of the created bet.
-     */
     @Override
     public Mono<ResponseEntity<BetResponseDTO>> postRegisterBet(Mono<BetRequestDTO> betRequestDTO, ServerWebExchange exchange) {
         return extractUserIdFromToken(exchange)
