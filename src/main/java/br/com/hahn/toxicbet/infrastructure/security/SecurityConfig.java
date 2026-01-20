@@ -1,6 +1,6 @@
 package br.com.hahn.toxicbet.infrastructure.security;
 
-import br.com.hahn.toxicbet.domain.exception.UserNotAuthorizedException;
+import br.com.hahn.toxicbet.domain.exception.NotAuthorizedException;
 import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
 import br.com.hahn.toxicbet.infrastructure.security.exception.CustomAccessDeniedHandler;
 import br.com.hahn.toxicbet.infrastructure.security.exception.CustomAuthenticationEntryPointHandler;
@@ -94,7 +94,7 @@ public class SecurityConfig {
             return jwtDecoder;
         } catch (Exception e) {
             log.error("Error creating JWT Decoder", e);
-            throw new UserNotAuthorizedException(ErrorMessages.UNAUTHORIZED_MESSAGE.getMessage());
+            throw new NotAuthorizedException(ErrorMessages.UNAUTHORIZED_MESSAGE.getMessage());
         }
     }
 
