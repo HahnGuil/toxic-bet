@@ -327,6 +327,11 @@ components:
           format: int64
           description: Visiting team ID (Long)
           example: 2
+        championshipId:
+          type: integer
+          format: int64
+          description: Championship for which the match is valid.
+          example: 1
         matchTime:
           type: string
           description: Date and time of the match in the format DD/MM/YYYY HH:MM
@@ -356,6 +361,10 @@ components:
           type: integer
           description: Score of the visiting team
           example: 1
+        championshipName:
+          type: string
+          description: Championship for which the match is valid.
+          example: Premier League
         matchTime:
           type: string
           description: Date em time of match DD/MM/YYYY HH:MM

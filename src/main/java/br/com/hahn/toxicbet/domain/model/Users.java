@@ -25,4 +25,7 @@ public class Users {
     @NotNull
     @Column("email")
     private String email;
+
+    @Column("user_points")
+    private Double userPoints;
 }

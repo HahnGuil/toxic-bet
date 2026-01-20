@@ -18,7 +18,7 @@ public class MatchMapper {
         return match;
     }
 
-    public MatchResponseDTO toDto(Match match, String homeTeamName, String visitingTeamName) {
+    public MatchResponseDTO toDto(Match match, String homeTeamName, String visitingTeamName, String championshipName) {
         if (match == null) return null;
 
         MatchResponseDTO dto = new MatchResponseDTO();
@@ -28,6 +28,7 @@ public class MatchMapper {
         dto.setMatchTime(DateTimeConverter.formatLocalDateTime(match.getMatchTime()));
         dto.setHomeTeamScore(match.getHomeTeamScore());
         dto.setVisitingTeamScore(match.getVisitingTeamScore());
+        dto.setChampionshipName(championshipName);
         dto.setResult(MatchResponseDTO.ResultEnum.valueOf(match.getResult().toString()));
         return dto;
     }

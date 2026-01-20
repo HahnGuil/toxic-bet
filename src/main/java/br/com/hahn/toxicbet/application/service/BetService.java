@@ -1,7 +1,6 @@
 package br.com.hahn.toxicbet.application.service;
 
 import br.com.hahn.toxicbet.application.mapper.BetMapper;
-import br.com.hahn.toxicbet.domain.exception.MatchNotOpenForBettingException;
 import br.com.hahn.toxicbet.domain.model.Match;
 import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
 import br.com.hahn.toxicbet.domain.model.enums.Result;

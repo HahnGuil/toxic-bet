@@ -1,7 +1,6 @@
 package br.com.hahn.toxicbet.application.controller;
 
 import br.com.hahn.toxicbet.domain.exception.*;
-import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
 import br.com.hahn.toxicbet.model.ErrorResponseDTO;
 import br.com.hahn.toxicbet.util.DateTimeConverter;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.support.WebExchangeBindException;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
@@ -21,66 +19,29 @@ import java.time.ZoneOffset;
 public class GlobalExceptionHandler {
 
 //    401
-    @ExceptionHandler(UserNotAuthorizedException.class)
-    public Mono<ResponseEntity<ErrorResponseDTO>> handlerUserNotAuthorizedException(UserNotAuthorizedException ex){
+    @ExceptionHandler(NotAuthorizedException.class)
+    public Mono<ResponseEntity<ErrorResponseDTO>> handlerUserNotAuthorizedException(NotAuthorizedException ex){
         var error = createErrorResponse(ex.getMessage(), getInstanteNow());
         return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error));
     }
 
 //    404
-    @ExceptionHandler(TeamNotFoundException.class)
-    public Mono<ResponseEntity<ErrorResponseDTO>> handlerTeamNotFoundException(TeamNotFoundException ex){
-        var error = createErrorResponse(ex.getMessage(), getInstanteNow());
-        return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(error));
-    }
-
-    @ExceptionHandler(UserNotFoundException.class)
-    public Mono<ResponseEntity<ErrorResponseDTO>> handlerUserNotFoundException(UserNotFoundException ex){
-        var error = createErrorResponse(ex.getMessage(), getInstanteNow());
-        return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(error));
-    }
-
-    @ExceptionHandler(MatchNotFoundException.class)
-    public Mono<ResponseEntity<ErrorResponseDTO>> handlerMatchNotFoundException(MatchNotFoundException ex){
+    @ExceptionHandler(NotFoundException.class)
+    public Mono<ResponseEntity<ErrorResponseDTO>> handlerTeamNotFoundException(NotFoundException ex){
         var error = createErrorResponse(ex.getMessage(), getInstanteNow());
         return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(error));
     }
 
 //    409
-    @ExceptionHandler(ConflictMatchTimeException.class)
-    public Mono<ResponseEntity<ErrorResponseDTO>> handlerConflictMatchTimeException(ConflictMatchTimeException ex){
+    @ExceptionHandler(ConflictException.class)
+    public Mono<ResponseEntity<ErrorResponseDTO>> handlerConflictException(ConflictException ex){
         var error = createErrorResponse(ex.getMessage(), getInstanteNow());
         return Mono.just(ResponseEntity.status(HttpStatus.CONFLICT).body(error));
     }
 
 //    422
-    @ExceptionHandler(InvalidMatchTimeException.class)
-    public Mono<ResponseEntity<ErrorResponseDTO>> handlerInvalidMatchTimeException(InvalidMatchTimeException ex){
-        var error = createErrorResponse(ex.getMessage(), getInstanteNow());
-        return Mono.just(ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error));
-    }
-
-    @ExceptionHandler(MatchNotOpenForBettingException.class)
-    public Mono<ResponseEntity<ErrorResponseDTO>> handlerMatchNotOpenForBettingException(MatchNotOpenForBettingException ex){
-        var error = createErrorResponse(ex.getMessage(), getInstanteNow());
-        return Mono.just(ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error));
-    }
-
-    @ExceptionHandler(InvalidTeamException.class)
-    public Mono<ResponseEntity<ErrorResponseDTO>> handlerInvalidTeamException(InvalidTeamException ex){
-        var error = createErrorResponse(ex.getMessage(), getInstanteNow());
-        return Mono.just(ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error));
-    }
-
-    @ExceptionHandler(WebExchangeBindException.class)
-    public Mono<ResponseEntity<ErrorResponseDTO>> handlerWebExchangeBindException(){
-        var message = ErrorMessages.GENERIC_INVALID_FORMAT.getMessage();
-        var error = createErrorResponse(message, getInstanteNow());
-        return Mono.just(ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error));
-    }
-
-    @ExceptionHandler(InvalidMatchStateException.class)
-    public Mono<ResponseEntity<ErrorResponseDTO>> handlerInvalidMatchStateException(InvalidMatchStateException ex){
+    @ExceptionHandler(BusinessException.class)
+    public Mono<ResponseEntity<ErrorResponseDTO>> handlerIBusinessException(BusinessException ex){
         var error = createErrorResponse(ex.getMessage(), getInstanteNow());
         return Mono.just(ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error));
     }

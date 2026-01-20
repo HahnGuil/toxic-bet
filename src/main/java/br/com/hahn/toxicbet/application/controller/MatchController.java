@@ -22,7 +22,6 @@ import java.time.Duration;
 
 @RestController
 @RequestMapping("/match")
-@Slf4j
 public class MatchController implements MatchApi {
 
     private final Sinks.Many<MatchResponseDTO> matchSink;
@@ -37,16 +36,13 @@ public class MatchController implements MatchApi {
     @Override
     public Mono<ResponseEntity<MatchResponseDTO>> postCreateMatch(Mono<MatchRequestDTO> matchRequestDTO, ServerWebExchange exchange) {
         return DateTimeConverter.formatInstantNowReactive()
-                .doOnNext(ts -> log.info("MatchController: Starting creating match at: {}", ts))
                 .then(matchService.createMatchDto(matchRequestDTO))
                 .doOnSuccess(matchSink::tryEmitNext)
-                .doOnSuccess(dto -> log.info("Match created: {}", dto))
                 .map(dto -> ResponseEntity.status(HttpStatus.CREATED).body(dto));
     }
 
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<MatchResponseDTO> streamAllMatches() {
-        log.info("MatchController: Get all matches stream at: {}", DateTimeConverter.formatInstantNow());
         Flux<MatchResponseDTO> matches = matchService.findAll();
         return Flux.merge(matches, matchSink.asFlux())
                 .delayElements(Duration.ofSeconds(4));
@@ -55,7 +51,6 @@ public class MatchController implements MatchApi {
     @Override
     public Mono<ResponseEntity<MatchResponseDTO>> patchUpdateMatchScore(Long matchId, Mono<UpdateScoreRequestDTO> updateScoreRequestDTO, ServerWebExchange exchange) {
         return DateTimeConverter.formatInstantNowReactive()
-                .doOnNext(ts -> log.info("MatchController: Starting update score for match {} at: {}", matchId, ts))
                 .then(updateScoreRequestDTO)
                 .flatMap(dto -> matchService.updateMatchScore(
                         matchId,
@@ -63,13 +58,11 @@ public class MatchController implements MatchApi {
                         dto.getVisitingTeamScore()
                 ))
                 .doOnSuccess(matchSink::tryEmitNext)
-                .doOnSuccess(dto -> log.info("MatchController: Score updated for match: {}", matchId))
                 .map(ResponseEntity::ok);
     }
 
     @GetMapping(value = "/scores", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<MatchResponseDTO> getStreamScores(){
-        log.info("MatchService: Get matches in IN-PROGRESS with scores at: {}", DateTimeConverter.formatInstantNow());
         Flux<MatchResponseDTO> matches = matchService.findAllInProgress();
         return Flux.merge(matches, matchSink.asFlux())
                 .delayElements(Duration.ofSeconds(1));

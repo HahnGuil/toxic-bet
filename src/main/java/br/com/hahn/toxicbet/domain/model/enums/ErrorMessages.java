@@ -20,6 +20,7 @@ public enum ErrorMessages {
     CAN_NOT_UPDATE_MATCH("Cannot update score for match not in progress"),
     MATCH_NOT_FOUND("Match not found for this id: "),
     USER_NOT_FOUND("No user was found for the email address: "),
+    CHAMPIONSHIP_NOT_FOUND("Championship not found"),
     MATCH_NOT_OPEN_TO_BETS("This match is not eligible for betting.");
 
     private final String message;

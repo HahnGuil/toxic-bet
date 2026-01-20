@@ -29,6 +29,9 @@ public class Match {
     @Column("visiting_team_score")
     private Integer visitingTeamScore;
 
+    @Column("championship_id")
+    private Long championshipId;
+
     @Column("result")
     private Result result;
 

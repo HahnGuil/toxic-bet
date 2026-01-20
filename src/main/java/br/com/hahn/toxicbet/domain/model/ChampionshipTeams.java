@@ -1,28 +1,25 @@
 package br.com.hahn.toxicbet.domain.model;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-import java.util.List;
-import java.util.UUID;
-
 @Data
-@Table("betting_pool")
+@Table("championship_teams")
 @RequiredArgsConstructor
-public class BettingPool {
+public class ChampionshipTeams {
 
     @Id
     private Long id;
 
-    @Column("betting_pool_name")
-    private String bettingPoolName;
+    @NotNull
+    @Column("championship_id")
+    private Long championshipId;
 
-    @Column("betting_pool_key")
-    private String bettingPoolKey;
-
-    @Column("betting_pool_owner_id")
-    private UUID bettingPoolOwnerId;
+    @NotNull
+    @Column("team_id")
+    private Long teamId;
 }
