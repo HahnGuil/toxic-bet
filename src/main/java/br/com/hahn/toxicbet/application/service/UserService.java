@@ -2,7 +2,6 @@ package br.com.hahn.toxicbet.application.service;
 
 import br.com.hahn.toxicbet.application.mapper.UserMapper;
 import br.com.hahn.toxicbet.domain.exception.NotFoundException;
-import br.com.hahn.toxicbet.domain.model.Match;
 import br.com.hahn.toxicbet.domain.model.Users;
 import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
 import br.com.hahn.toxicbet.domain.repository.UserRepository;
