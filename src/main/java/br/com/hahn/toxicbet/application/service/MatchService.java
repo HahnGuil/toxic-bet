@@ -77,6 +77,14 @@ public class MatchService {
                 }));
     }
 
+    public Mono<MatchResponseDTO> buildMatchResponseDTO(Match match) {
+        return Mono.zip(
+                teamService.findById(match.getHomeTeamId()),
+                teamService.findById(match.getVisitingTeamId()),
+                championshipService.findById(match.getChampionshipId())
+        ).map(matchResponse -> mapper.toDto(match, matchResponse.getT1().getName(), matchResponse.getT2().getName(), matchResponse.getT3().getName()));
+    }
+
     private Mono<MatchResponseDTO> fetchTeamsAndCreateMatch(MatchRequestDTO dto) {
         return Mono.zip(
                 findTeamWithContext(dto.getHomeTeamId(), ErrorMessages.HOME_TEAM_NOT_FOUND),
@@ -187,13 +195,5 @@ public class MatchService {
         match.setVisitingTeamScore(visitingScore);
 
         return Mono.just(match);
-    }
-
-    private Mono<MatchResponseDTO> buildMatchResponseDTO(Match match) {
-        return Mono.zip(
-                teamService.findById(match.getHomeTeamId()),
-                teamService.findById(match.getVisitingTeamId()),
-                championshipService.findById(match.getChampionshipId())
-        ).map(matchResponse -> mapper.toDto(match, matchResponse.getT1().getName(), matchResponse.getT2().getName(), matchResponse.getT3().getName()));
     }
 }

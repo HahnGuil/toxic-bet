@@ -1,9 +1,9 @@
 package br.com.hahn.toxicbet.application.service;
 
 import br.com.hahn.toxicbet.application.mapper.BetMapper;
+import br.com.hahn.toxicbet.domain.exception.BusinessException;
 import br.com.hahn.toxicbet.domain.model.Match;
 import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
-import br.com.hahn.toxicbet.domain.model.enums.Result;
 import br.com.hahn.toxicbet.domain.repository.BetRepository;
 import br.com.hahn.toxicbet.model.BetRequestDTO;
 import br.com.hahn.toxicbet.model.BetResponseDTO;
@@ -28,25 +28,18 @@ public class BetService {
 
     public Mono<BetResponseDTO> placeBet(Mono<BetRequestDTO> betRequestDTOMono, String userEmail) {
         return betRequestDTOMono
-                .doOnNext(dto -> log.info("BetService: Starting placeBet for user with email: {} at: {}",
-                        userEmail, DateTimeConverter.formatInstantNow()))
                 .flatMap(dto -> createBetResponse(dto, userEmail));
     }
 
     private Mono<Match> isMatchOpenForBetting(Long matchId){
-        log.info("BetService: Checking if the match is already open for betting at: {}", DateTimeConverter.formatInstantNow());
         return matchService.findById(matchId)
-                .flatMap(match -> {
-                    if(match.getResult() != Result.OPEN_FOR_BETTING){
-                        log.error("BetService: Match is not open to betting. Throw the MatchNotOpenForBettingException ar: {}", DateTimeConverter.formatInstantNow());
-                        return Mono.error(new MatchNotOpenForBettingException(ErrorMessages.MATCH_NOT_OPEN_TO_BETS.getMessage()));
-                    }
-                    return Mono.just(match);
-                });
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.error("MatchService: NOT_FOUND: Match for id: {}. Throw Not Found Exception at: {}", matchId, DateTimeConverter.formatInstantNow());
+                    return Mono.error(new BusinessException(ErrorMessages.MATCH_NOT_OPEN_TO_BETS.getMessage()));
+                }));
     }
 
     private Mono<BetResponseDTO> createBetResponse(BetRequestDTO dto, String userEmail){
-        log.info("BetService: Create Bet response at: {}", DateTimeConverter.formatInstantNow());
         return Mono.zip(
                 findUsersByEmail(userEmail),
                 isMatchOpenForBetting(dto.getMatchId())
@@ -54,12 +47,10 @@ public class BetService {
     }
 
     private Mono<UUID> findUsersByEmail(String userEmail){
-        log.info("BetService: Find user by email: {}, at: {}", userEmail, DateTimeConverter.formatInstantNow());
         return userService.findUserByEmail(userEmail);
     }
 
     private Mono<BetResponseDTO> createAndSaveBet(BetRequestDTO dto, UUID userID){
-        log.info("BetService: Save Bet at: {}", DateTimeConverter.formatInstantNow());
         var bet = mapper.toEntity(dto, userID);
         return betRepository.save(bet)
                 .flatMap(savedBet ->

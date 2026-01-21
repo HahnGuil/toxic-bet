@@ -2,10 +2,11 @@ package br.com.hahn.toxicbet.application.controller;
 
 import br.com.hahn.toxicbet.api.BetApi;
 import br.com.hahn.toxicbet.application.service.BetService;
+import br.com.hahn.toxicbet.application.service.MatchEventPublisherService;
+import br.com.hahn.toxicbet.application.service.MatchService;
 import br.com.hahn.toxicbet.infrastructure.service.JwtService;
 import br.com.hahn.toxicbet.model.BetRequestDTO;
 import br.com.hahn.toxicbet.model.BetResponseDTO;
-import br.com.hahn.toxicbet.util.DateTimeConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,23 +19,28 @@ import reactor.core.publisher.Mono;
 public class BetController extends AbstractController implements BetApi {
 
     private final BetService betService;
+    private final MatchService matchService;
+    private final MatchEventPublisherService matchEventPublisherService;
 
-
-    public BetController(JwtService jwtService, BetService betService) {
+    public BetController(JwtService jwtService, BetService betService,
+                         MatchService matchService, MatchEventPublisherService matchEventPublisherService) {
         super(jwtService);
         this.betService = betService;
+        this.matchService = matchService;
+        this.matchEventPublisherService = matchEventPublisherService;
     }
 
     @Override
     public Mono<ResponseEntity<BetResponseDTO>> postRegisterBet(Mono<BetRequestDTO> betRequestDTO, ServerWebExchange exchange) {
         return extractUserIdFromToken(exchange)
-                .flatMap(userEmail ->
-                        DateTimeConverter.formatInstantNowReactive()
-                                .doOnNext(ts -> log.info("BetController: Starting create bet for user: {} at: {}", userEmail, ts))
-                                .then(betService.placeBet(betRequestDTO, userEmail))
-                                .doOnSuccess(dto -> log.info("BetController: Bet placed for user: {} at: {}", userEmail, DateTimeConverter.formatInstantNow()))
-                                .map(dto -> ResponseEntity.status(HttpStatus.CREATED).body(dto))
-                );
+                .flatMap(userEmail -> betService.placeBet(betRequestDTO, userEmail))
+                .flatMap(betResponse ->
+                        matchService.findById(betResponse.getMatchId())
+                                .flatMap(matchService::buildMatchResponseDTO)
+                                .doOnSuccess(matchEventPublisherService::publishOddsUpdate)
+                                .thenReturn(betResponse)
+                )
+                .map(dto -> ResponseEntity.status(HttpStatus.CREATED).body(dto));
     }
 }
 

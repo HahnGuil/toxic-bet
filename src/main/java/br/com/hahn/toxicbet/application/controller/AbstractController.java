@@ -15,11 +15,8 @@ public abstract class AbstractController {
 
     protected Mono<Void> updateOAuthUserApplicationWithLogging(String email) {
         return jwtService.updateOAuthUserApplication()
-                .doOnSubscribe(s -> log.debug("AbstractController: Checking OAuth user status for user email:  {}, at: {}", email, DateTimeConverter.formatInstantNow()))
-                .doOnSuccess(v -> log.debug("AbstractController: OAuth check completed for user email: {}, at: {}", email, DateTimeConverter.formatInstantNow()))
-                . doOnError(err -> log.error("AbstractController: Error checking OAuth status for user email: {} at: {}", email, DateTimeConverter.formatInstantNow()))
                 .onErrorResume(e -> {
-                    log.warn("AbstractController: Continuing despite OAuth check failure for user email: {} at: {}", email, DateTimeConverter.formatInstantNow());
+                    log.error("AbstractController: Continuing despite OAuth check failure for user email: {} at: {}", email, DateTimeConverter.formatInstantNow());
                     return Mono.empty();
                 });
     }
@@ -29,9 +26,7 @@ public abstract class AbstractController {
                 .cast(org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken.class)
                 .map(jwtAuth -> {
                     var jwt = jwtAuth.getToken();
-                    String userEmail = jwt.getSubject();
-                    log.debug("AbstractController: Extracted user_id from token: {}", userEmail);
-                    return userEmail;
+                    return jwt.getSubject();
                 })
                 .switchIfEmpty(Mono.error(new IllegalStateException("User ID not found in token")))
         );
