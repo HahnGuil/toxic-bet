@@ -1,101 +1,90 @@
 package br.com.hahn.toxicbet.application.service;
 
-import br.com.hahn.toxicbet.domain.model.Odds;
+import br.com.hahn.toxicbet.domain.model.Match;
+import br.com.hahn.toxicbet.domain.model.enums.BaseValues;
 import br.com.hahn.toxicbet.domain.model.enums.Result;
-import br.com.hahn.toxicbet.domain.repository.OddRepository;
-import br.com.hahn.toxicbet.util.DateTimeConverter;
+import br.com.hahn.toxicbet.domain.repository.MatchRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+
+import java.util.Objects;
+
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class OddsService {
 
-    private final OddRepository oddRepository;
+    private final MatchRepository matchRepository;
     private final UserService userService;
-    private static final Double ODD_BASE_VALUE = 5.0;
-
-    public Mono<Odds> createInitialOddsForMatch(Long matchId){
-        log.info("OddsService: Creating initial odds for match: {}, at: {}", matchId, DateTimeConverter.formatInstantNow());
-
-        Odds odds = new Odds();
-        odds.setMatchId(matchId);
-        odds.setTotalBetsForMatch(0);
-        odds.setTotalBetsHomeWin(0);
-        odds.setTotalBetsVisitingWin(0);
-        odds.setTotalBetsDraw(0);
-        odds.setOddHomeTeam(ODD_BASE_VALUE);
-        odds.setOddDraw(ODD_BASE_VALUE);
-        odds.setOddVisitingTeam(ODD_BASE_VALUE);
-
-        return oddRepository.save(odds);
-    }
-
+    private final MatchService matchService;
 
     public Mono<Void> updateOddsForBet(Long matchId, Result betResult){
-        log.info("OddsService: Updating odds for match id: {}, at: {}", matchId, DateTimeConverter.formatInstantNow());
-
-        return oddRepository.findByMatchId(matchId)
-                .flatMap(odds -> userService.countAllUsers()
+        return matchService.findById(matchId)
+                .flatMap(match -> userService.countAllUsers()
                         .flatMap(totalUsers -> {
-                            odds.setTotalBetsForMatch(odds.getTotalBetsForMatch() + 1);
-                            return updateOddsByResult(odds, betResult, totalUsers);
+                            match.setTotalBetMatch(match.getTotalBetMatch() + plusUserValue());
+                            return updateOddsForMatch(match, betResult, totalUsers);
                         }))
-                .flatMap(oddRepository::save)
-                .doOnSuccess(odds -> log.info("OddsService: Odds updated successfully for match: {} at: {}", matchId, DateTimeConverter.formatInstantNow()))
-                .doOnError(error -> log.error("OddsService: Error updating odds for match: {}, error: {} at: {}", matchId, error.getMessage(), DateTimeConverter.formatInstantNow()))
+                .flatMap(matchRepository::save)
                 .then();
     }
 
-    private Mono<Odds> updateOddsByResult(Odds odds, Result betResult, Long totalUsers) {
-        int totalBets = odds.getTotalBetsForMatch();
+    private Mono<Match> updateOddsForMatch(Match match, Result betResult, Long totalUser){
+        int totalBets = match.getTotalBetMatch();
 
         return Mono.fromCallable(() -> {
             switch (betResult) {
                 case HOME_WIN -> {
-                    odds.setTotalBetsHomeWin(odds.getTotalBetsHomeWin() + 1);
-                    int contraryBets = calculateContraryBets(odds, betResult);
-                    odds.setOddHomeTeam(calculateNewOdd(contraryBets, totalBets, totalUsers));
+                    match.setTotalBetHomeTeam(match.getTotalBetHomeTeam() + 1);
+                    int contraryBets = calculateContraryBets(match, betResult);
+                    match.setOddsHomeTeam(calculateNewOdd(contraryBets, totalBets, totalUser));
                 }
                 case VISITING_WIN -> {
-                    odds.setTotalBetsVisitingWin(odds.getTotalBetsVisitingWin() + 1);
-                    int contraryBets = calculateContraryBets(odds, betResult);
-                    odds.setOddVisitingTeam(calculateNewOdd(contraryBets, totalBets, totalUsers));
+                    match.setTotalBetVisitingTeam(match.getTotalBetVisitingTeam() + 1);
+                    int contraryBets = calculateContraryBets(match, betResult);
+                    match.setOddsVisitingTeam(calculateNewOdd(contraryBets, totalBets, totalUser));
                 }
                 case DRAW -> {
-                    odds.setTotalBetsDraw(odds.getTotalBetsDraw() + 1);
-                    int contraryBets = calculateContraryBets(odds, betResult);
-                    odds.setOddDraw(calculateNewOdd(contraryBets, totalBets, totalUsers));
+                    match.setTotalBetDraw(match.getTotalBetMatch() + 1);
+                    int contraryBets = calculateContraryBets(match, betResult);
+                    match.setOddsDraw(calculateNewOdd(contraryBets, totalBets, totalUser));
                 }
                 default -> {
-                    odds.setTotalBetsDraw(0);
-                    odds.setOddDraw(calculateNewOdd(0, 0, 0L));
+                    match.setTotalBetMatch(0);
+                    match.setOddsDraw(calculateNewOdd(0, 0, 0L));
                 }
             }
-            return odds;
+
+            return match;
         });
     }
 
+    private int calculateContraryBets(Match match, Result betResult) {
+        int totalBets = match.getTotalBetMatch();
 
-    private int calculateContraryBets(Odds odds, Result betResult) {
-        int totalBets = odds.getTotalBetsForMatch();
-
-        // Apostas contrárias = total de apostas - apostas no resultado atual
         return switch (betResult) {
-            case HOME_WIN -> totalBets - odds.getTotalBetsHomeWin();
-            case VISITING_WIN -> totalBets - odds.getTotalBetsVisitingWin();
-            case DRAW -> totalBets - odds.getTotalBetsDraw();
+            case HOME_WIN -> totalBets - match.getTotalBetHomeTeam();
+            case VISITING_WIN -> totalBets - match.getTotalBetVisitingTeam();
+            case DRAW -> totalBets - match.getTotalBetDraw();
             default -> totalBets;
         };
     }
 
     private Double calculateNewOdd(int contraryBets, int totalBets, Long totalUsers) {
         if (totalBets == 0) {
-            return ODD_BASE_VALUE;
+            return BaseValues.ODD_BASE_VALUE.getDoubleValue();
         }
-        return ((((double) contraryBets / totalBets) * totalUsers) / 100) * ODD_BASE_VALUE;
+        return ((((double) contraryBets / totalBets) * totalUsers) / 100) * baseOddsValue();
+    }
+
+    private Double baseOddsValue(){
+        return Objects.requireNonNull(BaseValues.ODD_BASE_VALUE.getDoubleValue());
+    }
+
+    private Integer plusUserValue(){
+        return  Objects.requireNonNull(BaseValues.PLUS_USER_VALUE.getIntValue());
     }
 }

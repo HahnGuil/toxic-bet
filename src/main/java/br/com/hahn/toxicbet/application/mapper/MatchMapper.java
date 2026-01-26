@@ -15,6 +15,7 @@ public class MatchMapper {
         match.setHomeTeamId(dto.getHomeTeamId());
         match.setVisitingTeamId(dto.getVisitingTeamId());
         match.setMatchTime(DateTimeConverter.parseToLocalDateTime(dto.getMatchTime()));
+        match.setChampionshipId(dto.getChampionshipId());
         return match;
     }
 

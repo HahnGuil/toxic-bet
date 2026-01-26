@@ -5,6 +5,7 @@ import br.com.hahn.toxicbet.domain.exception.*;
 import br.com.hahn.toxicbet.domain.model.Championship;
 import br.com.hahn.toxicbet.domain.model.Match;
 import br.com.hahn.toxicbet.domain.model.Team;
+import br.com.hahn.toxicbet.domain.model.enums.BaseValues;
 import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
 import br.com.hahn.toxicbet.domain.model.enums.Result;
 import br.com.hahn.toxicbet.domain.repository.MatchRepository;
@@ -27,10 +28,8 @@ public class MatchService {
     private final TeamService teamService;
     private final MatchRepository repository;
     private final MatchMapper mapper;
-    private final OddsService oddsService;
     private final ChampionshipService championshipService;
 
-    private static final Integer INITIAL_SCORE = 0;
 
     public Mono<MatchResponseDTO> createMatchDto(Mono<MatchRequestDTO> matchRequestDTOMono) {
         return matchRequestDTOMono
@@ -50,9 +49,10 @@ public class MatchService {
                 .filter(match -> match.getMatchTime().isBefore(LocalDateTime.now()))
                 .flatMap(match -> {
                     match.setResult(Result.IN_PROGRESS);
-                    return repository.save(match)
-                            .flatMap(savedMatch -> oddsService.createInitialOddsForMatch(savedMatch.getId())
-                                    .thenReturn(savedMatch));
+                    match.setOddsHomeTeam(BaseValues.ODD_BASE_VALUE.getDoubleValue());
+                    match.setOddsVisitingTeam(BaseValues.ODD_BASE_VALUE.getDoubleValue());
+                    match.setOddsDraw(BaseValues.ODD_BASE_VALUE.getDoubleValue());
+                    return repository.save(match);
                 }).count();
     }
 
@@ -118,8 +118,11 @@ public class MatchService {
     private Match prepareMatchEntity(MatchRequestDTO dto) {
         var entity = mapper.toEntity(dto);
         entity.setResult(Result.NOT_STARTED);
-        entity.setHomeTeamScore(INITIAL_SCORE);
-        entity.setVisitingTeamScore(INITIAL_SCORE);
+        entity.setHomeTeamScore(BaseValues.INITIAL_SCORE.getIntValue());
+        entity.setVisitingTeamScore(BaseValues.INITIAL_SCORE.getIntValue());
+        entity.setOddsHomeTeam(BaseValues.ODD_BASE_VALUE.getDoubleValue());
+        entity.setOddsDraw(BaseValues.ODD_BASE_VALUE.getDoubleValue());
+        entity.setOddsDraw(BaseValues.ODD_BASE_VALUE.getDoubleValue());
         return entity;
     }
 

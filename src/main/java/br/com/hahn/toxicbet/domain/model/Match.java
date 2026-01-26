@@ -29,6 +29,15 @@ public class Match {
     @Column("visiting_team_score")
     private Integer visitingTeamScore;
 
+    @Column("odds_home_team")
+    private Double oddsHomeTeam;
+
+    @Column("odds_visiting_team")
+    private Double oddsVisitingTeam;
+
+    @Column("odds_draw")
+    private Double oddsDraw;
+
     @Column("championship_id")
     private Long championshipId;
 
@@ -37,4 +46,16 @@ public class Match {
 
     @Column("match_time")
     private LocalDateTime matchTime;
+
+    @Column("ttotal_bet_home_team")
+    private Integer totalBetHomeTeam;
+
+    @Column("total_bet_draw")
+    private Integer totalBetDraw;
+
+    @Column("total_bet_visiting_team")
+    private Integer totalBetVisitingTeam;
+
+    @Column("total_bet_match")
+    private Integer totalBetMatch;
 }

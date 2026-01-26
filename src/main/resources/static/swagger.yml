@@ -371,7 +371,7 @@ components:
           example: "21/12/2025 18:30"
         result:
           type: string
-          enum: [ NOT_STARTED, HOME_WIN, VISITING_WIN, DRAW, IN_PROGRESS ]
+          enum: [ NOT_STARTED, HOME_WIN, VISITING_WIN, DRAW, IN_PROGRESS, OPEN_FOR_BETTING ]
           description: Match result
           example: "NOT_STARTED"
     UserRequestDTO:
