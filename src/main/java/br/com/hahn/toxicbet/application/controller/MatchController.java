@@ -40,13 +40,6 @@ public class MatchController implements MatchApi {
     public Flux<MatchResponseDTO> streamAllMatches() {
         Flux<MatchResponseDTO> matches = matchService.findAll();
         return Flux.merge(matches, matchEventPublisherService.getMatchStream())
-                .delayElements(Duration.ofSeconds(4));
-    }
-
-    @GetMapping(value = "/odds", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<MatchResponseDTO> streamOdds() {
-        Flux<MatchResponseDTO> matches = matchService.findAll();
-        return Flux.merge(matches, matchEventPublisherService.getOddsStream())
                 .delayElements(Duration.ofSeconds(1));
     }
 

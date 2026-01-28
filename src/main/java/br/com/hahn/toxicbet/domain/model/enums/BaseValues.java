@@ -8,7 +8,7 @@ import lombok.ToString;
 public enum BaseValues {
     ODD_BASE_VALUE(2.0),
     PLUS_USER_VALUE(1),
-    INITIAL_SCORE(0);
+    INITIAL_ZERO(0);
 
     private final Integer intValue;
     private final Double doubleValue;

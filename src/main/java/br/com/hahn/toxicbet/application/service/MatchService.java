@@ -118,11 +118,12 @@ public class MatchService {
     private Match prepareMatchEntity(MatchRequestDTO dto) {
         var entity = mapper.toEntity(dto);
         entity.setResult(Result.NOT_STARTED);
-        entity.setHomeTeamScore(BaseValues.INITIAL_SCORE.getIntValue());
-        entity.setVisitingTeamScore(BaseValues.INITIAL_SCORE.getIntValue());
+        entity.setHomeTeamScore(BaseValues.INITIAL_ZERO.getIntValue());
+        entity.setVisitingTeamScore(BaseValues.INITIAL_ZERO.getIntValue());
         entity.setOddsHomeTeam(BaseValues.ODD_BASE_VALUE.getDoubleValue());
         entity.setOddsDraw(BaseValues.ODD_BASE_VALUE.getDoubleValue());
         entity.setOddsDraw(BaseValues.ODD_BASE_VALUE.getDoubleValue());
+        entity.setTotalBetMatch(BaseValues.INITIAL_ZERO.getIntValue());
         return entity;
     }
 

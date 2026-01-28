@@ -374,6 +374,21 @@ components:
           enum: [ NOT_STARTED, HOME_WIN, VISITING_WIN, DRAW, IN_PROGRESS, OPEN_FOR_BETTING ]
           description: Match result
           example: "NOT_STARTED"
+        homeTeamOdds:
+          type: number
+          format: double
+          description: Odds for home team
+          example: "2.5"
+        visitingTeamOdds:
+          type: number
+          format: double
+          description: Odds for home team
+          example: "2.5"
+        drawTeamOdds:
+          type: number
+          format: double
+          description: Odds for home team
+          example: "2.5"
     UserRequestDTO:
       type: object
       required:

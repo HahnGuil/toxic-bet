@@ -31,6 +31,9 @@ public class MatchMapper {
         dto.setVisitingTeamScore(match.getVisitingTeamScore());
         dto.setChampionshipName(championshipName);
         dto.setResult(MatchResponseDTO.ResultEnum.valueOf(match.getResult().toString()));
+        dto.setHomeTeamOdds(match.getOddsHomeTeam());
+        dto.setVisitingTeamOdds(match.getOddsVisitingTeam());
+        dto.setDrawTeamOdds(match.getOddsDraw());
         return dto;
     }
 }
