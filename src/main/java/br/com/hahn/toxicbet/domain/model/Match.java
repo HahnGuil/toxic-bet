@@ -47,7 +47,7 @@ public class Match {
     @Column("match_time")
     private LocalDateTime matchTime;
 
-    @Column("ttotal_bet_home_team")
+    @Column("total_bet_home_team")
     private Integer totalBetHomeTeam;
 
     @Column("total_bet_draw")

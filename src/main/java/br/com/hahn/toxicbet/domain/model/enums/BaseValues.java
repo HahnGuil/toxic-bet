@@ -6,7 +6,7 @@ import lombok.ToString;
 @Getter
 @ToString
 public enum BaseValues {
-    ODD_BASE_VALUE(2.0),
+    ODD_BASE_VALUE(10.0),
     PLUS_USER_VALUE(1),
     INITIAL_ZERO(0);
 

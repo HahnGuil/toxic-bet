@@ -54,7 +54,7 @@ public class BetService {
         var bet = mapper.toEntity(dto, userID);
         return betRepository.save(bet)
                 .flatMap(savedBet ->
-                        oddsService.updateOddsForBet(savedBet.getMatchId(), savedBet.getResult())
+                        oddsService.updateOddsForBet(savedBet.getMatchId(), savedBet.getResult(), dto.getOdds())
                                 .thenReturn(savedBet))
                 .map(mapper::toDTO);
     }

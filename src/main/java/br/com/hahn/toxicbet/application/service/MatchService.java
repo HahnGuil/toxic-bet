@@ -122,8 +122,11 @@ public class MatchService {
         entity.setVisitingTeamScore(BaseValues.INITIAL_ZERO.getIntValue());
         entity.setOddsHomeTeam(BaseValues.ODD_BASE_VALUE.getDoubleValue());
         entity.setOddsDraw(BaseValues.ODD_BASE_VALUE.getDoubleValue());
-        entity.setOddsDraw(BaseValues.ODD_BASE_VALUE.getDoubleValue());
+        entity.setOddsVisitingTeam(BaseValues.ODD_BASE_VALUE.getDoubleValue());
         entity.setTotalBetMatch(BaseValues.INITIAL_ZERO.getIntValue());
+        entity.setTotalBetHomeTeam(BaseValues.INITIAL_ZERO.getIntValue());
+        entity.setTotalBetDraw(BaseValues.INITIAL_ZERO.getIntValue());
+        entity.setTotalBetVisitingTeam(BaseValues.INITIAL_ZERO.getIntValue());
         return entity;
     }
 
