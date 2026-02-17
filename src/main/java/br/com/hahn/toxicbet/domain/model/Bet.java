@@ -33,4 +33,7 @@ public class Bet {
     @Column("bet_time")
     private LocalDateTime betTime;
 
+    @Column("user_points")
+    private Double userPoint;
+
 }

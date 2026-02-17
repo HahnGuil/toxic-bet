@@ -43,6 +43,10 @@ public class MatchService {
         return repository.findAll().flatMap(this::buildMatchResponseDTO);
     }
 
+    public Mono<MatchResponseDTO> getById(Long id){
+        return findById(id).flatMap(this::buildMatchResponseDTO);
+    }
+
     public Mono<Long> updateMatchesToInProgress(){
         return repository.findAll()
                 .filter(match -> match.getResult() == Result.NOT_STARTED)

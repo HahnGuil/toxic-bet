@@ -10,9 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -43,6 +41,11 @@ public class MatchController implements MatchApi {
                 .delayElements(Duration.ofSeconds(1));
     }
 
+    @GetMapping("/{id}")
+    public Mono<MatchResponseDTO> getMatchById(@PathVariable Long id){
+        return matchService.getById(id).mapNotNull(response -> ResponseEntity.status(HttpStatus.OK).body(response).getBody());
+    }
+
     @Override
     public Mono<ResponseEntity<MatchResponseDTO>> patchUpdateMatchScore(Long matchId, Mono<UpdateScoreRequestDTO> updateScoreRequestDTO, ServerWebExchange exchange) {
         return updateScoreRequestDTO
@@ -53,12 +56,5 @@ public class MatchController implements MatchApi {
                 ))
                 .doOnSuccess(matchEventPublisherService::publishOddsUpdate)
                 .map(ResponseEntity::ok);
-    }
-
-    @GetMapping(value = "/scores", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<MatchResponseDTO> getStreamScores(){
-        Flux<MatchResponseDTO> matches = matchService.findAllInProgress();
-        return Flux.merge(matches, matchEventPublisherService.getOddsStream())
-                .delayElements(Duration.ofSeconds(1));
     }
 }

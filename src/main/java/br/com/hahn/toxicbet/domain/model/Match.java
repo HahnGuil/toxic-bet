@@ -58,4 +58,7 @@ public class Match {
 
     @Column("total_bet_match")
     private Integer totalBetMatch;
+
+    @Column("version")
+    private Integer version;
 }

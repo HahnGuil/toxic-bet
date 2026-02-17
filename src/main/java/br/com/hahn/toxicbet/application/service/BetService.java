@@ -11,6 +11,7 @@ import br.com.hahn.toxicbet.util.DateTimeConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
@@ -25,6 +26,7 @@ public class BetService {
     private final MatchService matchService;
     private final BetMapper mapper;
     private final OddsService oddsService;
+    private final TransactionalOperator transactionalOperator;
 
     public Mono<BetResponseDTO> placeBet(Mono<BetRequestDTO> betRequestDTOMono, String userEmail) {
         return betRequestDTOMono
@@ -52,10 +54,14 @@ public class BetService {
 
     private Mono<BetResponseDTO> createAndSaveBet(BetRequestDTO dto, UUID userID){
         var bet = mapper.toEntity(dto, userID);
-        return betRepository.save(bet)
-                .flatMap(savedBet ->
-                        oddsService.updateOddsForBet(savedBet.getMatchId(), savedBet.getResult(), dto.getOdds())
-                                .thenReturn(savedBet))
-                .map(mapper::toDTO);
+
+        return oddsService.updateOddsForBet(bet.getMatchId(), bet.getResult(), dto.getOdds())
+                .flatMap(userPoints -> {
+                    bet.setUserPoint(userPoints);
+                    bet.setBetOdds(dto.getOdds());
+                    return betRepository.save(bet);
+                })
+                .map(mapper::toDTO)
+                .as(transactionalOperator::transactional);
     }
 }

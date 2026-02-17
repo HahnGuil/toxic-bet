@@ -27,8 +27,4 @@ public class MatchEventPublisherService {
     public Flux<MatchResponseDTO> getMatchStream() {
         return matchSink.asFlux();
     }
-
-    public Flux<MatchResponseDTO> getOddsStream() {
-        return oddsSink.asFlux();
-    }
 }

@@ -56,6 +56,8 @@ CREATE TABLE IF NOT EXISTS bet (
                                    match_id BIGINT NOT NULL,
                                    result VARCHAR(50) NOT NULL,
                                    bet_time TIMESTAMP DEFAULT NOW(),
+                                   user_points DOUBLE PRECISION,
+                                   bet_odds DOUBLE PRECISION,
                                    CONSTRAINT fk_bet_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                                    CONSTRAINT fk_bet_match FOREIGN KEY (match_id) REFERENCES match(id) ON DELETE CASCADE,
                                    CONSTRAINT uq_user_match_bet UNIQUE (user_id, match_id),

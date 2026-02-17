@@ -7,8 +7,10 @@ import lombok.ToString;
 @ToString
 public enum BaseValues {
     ODD_BASE_VALUE(10.0),
-    PLUS_USER_VALUE(1),
-    INITIAL_ZERO(0);
+    PLUS_VALUE(1),
+    INITIAL_ZERO(0),
+    ADJUSTMENT_VALUE(1.0),
+    MINIMAL_ODD_VALEU(1.0);
 
     private final Integer intValue;
     private final Double doubleValue;
