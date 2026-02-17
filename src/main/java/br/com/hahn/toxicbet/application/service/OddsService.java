@@ -1,20 +1,17 @@
 package br.com.hahn.toxicbet.application.service;
 
-import br.com.hahn.toxicbet.domain.exception.BusinessException;
 import br.com.hahn.toxicbet.domain.model.Match;
 import br.com.hahn.toxicbet.domain.model.enums.BaseValues;
-import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
 import br.com.hahn.toxicbet.domain.model.enums.Result;
 import br.com.hahn.toxicbet.domain.repository.MatchRepository;
+import br.com.hahn.toxicbet.infrastructure.repository.MatchLockRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import java.time.LocalDateTime;
 import java.util.Objects;
 
 
@@ -24,10 +21,10 @@ import java.util.Objects;
 public class OddsService {
 
     private final MatchRepository matchRepository;
-    private final DatabaseClient databaseClient;
+    private final MatchLockRepository matchLockRepository;
 
     public Mono<Double> updateOddsForBet(Long matchId, Result result, Double currentOdds) {
-        return findMatchWithLock(matchId)
+        return matchLockRepository.findByIdWithLock(matchId)
                 .flatMap(match -> calculatedOdds(match, result, currentOdds))
                 .flatMap(tuple -> matchRepository.save(tuple.getT1())
                         .doOnSuccess(saved -> log.debug(
@@ -41,44 +38,6 @@ public class OddsService {
                         .thenReturn(tuple.getT2()));
     }
 
-    private Mono<Match> findMatchWithLock(Long matchId) {
-        return databaseClient.sql("""
-                    SELECT id, home_team_id, visiting_team_id, home_team_score, visiting_team_score,
-                           odds_home_team, odds_visiting_team, odds_draw, championship_id, result,
-                           match_time, total_bet_home_team, total_bet_draw, total_bet_visiting_team,
-                           total_bet_match, version
-                    FROM match
-                    WHERE id = :matchId
-                    FOR UPDATE
-                    """)
-                .bind("matchId", matchId)
-                .map((row, metadata) -> {
-                    Match match = new Match();
-                    match.setId(row.get("id", Long.class));
-                    match.setHomeTeamId(row.get("home_team_id", Long.class));
-                    match.setVisitingTeamId(row.get("visiting_team_id", Long.class));
-                    match.setHomeTeamScore(row.get("home_team_score", Integer.class));
-                    match.setVisitingTeamScore(row.get("visiting_team_score", Integer.class));
-                    match.setOddsHomeTeam(row.get("odds_home_team", Double.class));
-                    match.setOddsVisitingTeam(row.get("odds_visiting_team", Double.class));
-                    match.setOddsDraw(row.get("odds_draw", Double.class));
-                    match.setChampionshipId(row.get("championship_id", Long.class));
-
-                    String resultStr = row.get("result", String.class);
-                    match.setResult(resultStr != null ? Result.valueOf(resultStr) : null);
-
-                    match.setMatchTime(row.get("match_time", LocalDateTime.class));
-                    match.setTotalBetHomeTeam(row.get("total_bet_home_team", Integer.class));
-                    match.setTotalBetDraw(row.get("total_bet_draw", Integer.class));
-                    match.setTotalBetVisitingTeam(row.get("total_bet_visiting_team", Integer.class));
-                    match.setTotalBetMatch(row.get("total_bet_match", Integer.class));
-                    match.setVersion(row.get("version", Integer.class));
-
-                    return match;
-                })
-                .one()
-                .switchIfEmpty(Mono.error(new BusinessException(ErrorMessages.MATCH_NOT_FOUND.getMessage())));
-    }
 
     private Mono<Tuple2<Match, Double>> calculatedOdds(Match match, Result betResult, Double oddsUser){
         match.setTotalBetMatch(match.getTotalBetMatch() + 1);
