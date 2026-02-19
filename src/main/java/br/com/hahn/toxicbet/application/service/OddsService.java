@@ -4,7 +4,6 @@ import br.com.hahn.toxicbet.domain.model.Match;
 import br.com.hahn.toxicbet.domain.model.enums.BaseValues;
 import br.com.hahn.toxicbet.domain.model.enums.Result;
 import br.com.hahn.toxicbet.domain.repository.MatchRepository;
-import br.com.hahn.toxicbet.infrastructure.repository.MatchLockRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,17 +13,29 @@ import reactor.util.function.Tuples;
 
 import java.util.Objects;
 
-
+/**
+ * Service responsible for calculating and updating odds.
+ * No longer uses pessimistic locking - sequential processing is guaranteed
+ * by BetProcessorService using Sink + concatMap per match.
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class OddsService {
 
     private final MatchRepository matchRepository;
-    private final MatchLockRepository matchLockRepository;
 
+    /**
+     * Updates odds for a bet without locking.
+     * Sequential processing per match is guaranteed by the caller (BetProcessorService).
+     *
+     * @param matchId The match ID
+     * @param result The bet result
+     * @param currentOdds The current odds
+     * @return Mono with the calculated user points
+     */
     public Mono<Double> updateOddsForBet(Long matchId, Result result, Double currentOdds) {
-        return matchLockRepository.findByIdWithLock(matchId)
+        return matchRepository.findById(matchId)
                 .flatMap(match -> calculatedOdds(match, result, currentOdds))
                 .flatMap(tuple -> matchRepository.save(tuple.getT1())
                         .doOnSuccess(saved -> log.debug(

@@ -36,8 +36,14 @@ public class MatchController implements MatchApi {
 
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<MatchResponseDTO> streamAllMatches() {
-        Flux<MatchResponseDTO> matches = matchService.findAll();
-        return Flux.merge(matches, matchEventPublisherService.getMatchStream())
+        // Initial load of all existing matches
+        Flux<MatchResponseDTO> existingMatches = matchService.findAll();
+
+        // Stream of all events (match creation + odds updates)
+        Flux<MatchResponseDTO> eventStream = matchEventPublisherService.getAllEventsStream();
+
+        // Merge initial load with real-time events
+        return Flux.merge(existingMatches, eventStream)
                 .delayElements(Duration.ofSeconds(1));
     }
 

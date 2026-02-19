@@ -27,4 +27,16 @@ public class MatchEventPublisherService {
     public Flux<MatchResponseDTO> getMatchStream() {
         return matchSink.asFlux();
     }
+
+    public Flux<MatchResponseDTO> getOddsStream() {
+        return oddsSink.asFlux();
+    }
+
+    /**
+     * Returns a merged stream of both match creation and odds updates.
+     * This stream emits events whenever a match is created OR odds are updated.
+     */
+    public Flux<MatchResponseDTO> getAllEventsStream() {
+        return Flux.merge(matchSink.asFlux(), oddsSink.asFlux());
+    }
 }
