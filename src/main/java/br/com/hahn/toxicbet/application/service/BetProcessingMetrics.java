@@ -65,44 +65,6 @@ public class BetProcessingMetrics {
     }
 
     /**
-     * Get current queue size for a match
-     */
-    public long getQueueSize(Long matchId) {
-        AtomicLong size = queueSizes.get(matchId);
-        return size != null ? size.get() : 0;
-    }
-
-    /**
-     * Get total number of matches being processed
-     */
-    public int getActiveMatchesCount() {
-        return queueSizes.size();
-    }
-
-    /**
-     * Get processing statistics for a match
-     */
-    public String getMatchStatistics(Long matchId) {
-        long processed = processedCount.getOrDefault(matchId, new AtomicLong(0)).get();
-        long failed = failedCount.getOrDefault(matchId, new AtomicLong(0)).get();
-        long queueSize = getQueueSize(matchId);
-
-        return String.format("Match %d: Processed=%d, Failed=%d, QueueSize=%d",
-                matchId, processed, failed, queueSize);
-    }
-
-    /**
-     * Clean up metrics for finished matches
-     */
-    public void cleanupMatchMetrics(Long matchId) {
-        queueSizes.remove(matchId);
-        processedCount.remove(matchId);
-        failedCount.remove(matchId);
-
-        log.info("BetProcessingMetrics: Cleaned up metrics for match {}", matchId);
-    }
-
-    /**
      * Simple processing sample record
      */
     public record ProcessingSample(long startTime) {}
