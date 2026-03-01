@@ -104,6 +104,71 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDTO'
+    patch:
+      tags:
+        - match
+      summary: Operation to close a match when it finish
+      description: This operation will close the match, when it finish. It's a service endpoint for manual termination.
+      operationId: patchCloseMatch
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: matchId
+          in: query
+          required: true
+          description: ID of the match to be closed
+          schema:
+            type: integer
+            format: int64
+        - name: result
+          in: query
+          required: true
+          description: Result of ended match
+          schema:
+            type: string
+            example: "HOME_WIN"
+      responses:
+        '204':
+          description: Match Close
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                missingToken:
+                  summary: Missing authentication token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Authentication token is required."
+                invalidToken:
+                  summary: Invalid or malformed token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Invalid authentication token."
+                expiredToken:
+                  summary: Expired token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Authentication token has expired."
+                authenticationFailed:
+                  summary: Authentication server connection failed
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Unable to authenticate. Please try again later."
+        '404':
+          description: Resource not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                matchNotFound:
+                  summary: Match not found
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "The reported match was not found."
   /scores:
     get:
       summary: Operation to retrieve the results of ongoing matches.
@@ -181,39 +246,6 @@ paths:
           description: Not Found
         '422':
           description: Matchmaking is not allowed.
-  /{matchId}/score:
-    patch:
-      tags:
-        - match
-      summary: Update match score
-      description: Updates the score of an ongoing match
-      operationId: patchUpdateMatchScore
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: matchId
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateScoreRequestDTO'
-      responses:
-        '200':
-          description: Score successfully updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MatchResponseDTO'
-        '404':
-          description: Match not found
-        '422':
-          description: Cannot update score for finished match
   /bet:
     post:
       tags:
@@ -371,7 +403,7 @@ components:
           example: "21/12/2025 18:30"
         result:
           type: string
-          enum: [ NOT_STARTED, HOME_WIN, VISITING_WIN, DRAW, IN_PROGRESS, OPEN_FOR_BETTING ]
+          enum: [ NOT_STARTED, HOME_WIN, VISITING_WIN, DRAW, IN_PROGRESS, OPEN_FOR_BETTING, ENDED, CLOSE_FOR_BETTING ]
           description: Match result
           example: "NOT_STARTED"
         homeTeamOdds:
@@ -389,6 +421,16 @@ components:
           format: double
           description: Odds for home team
           example: "2.5"
+    EndedMatchRequestDTO:
+      type: object
+      required:
+        - result
+      properties:
+        result:
+          type: string
+          enum: [ ENDED ]
+          description: Match result
+          example: "ENDED"
     UserRequestDTO:
       type: object
       required:

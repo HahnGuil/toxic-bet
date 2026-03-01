@@ -29,6 +29,7 @@ public class MatchService {
     private final MatchRepository repository;
     private final MatchMapper mapper;
     private final ChampionshipService championshipService;
+    private final UserService userService;
 
 
     public Mono<MatchResponseDTO> createMatchDto(Mono<MatchRequestDTO> matchRequestDTOMono) {
@@ -79,6 +80,16 @@ public class MatchService {
                     log.error("MatchService: NOT_FOUND: Not found match for id: {}, throw Not Found Exception at: {}", id, DateTimeConverter.formatInstantNow());
                     return Mono.error(new NotFoundException(ErrorMessages.MATCH_NOT_FOUND.getMessage()));
                 }));
+    }
+
+    public Mono<Void> closeMatch(Long matchId, String result){
+       return userService.calculatedUserPoints(matchId, result)
+               .then(this.findById(matchId))
+               .flatMap(match -> {
+                   match.setResult(Result.valueOf(result));
+                   return repository.save(match);
+               })
+               .then();
     }
 
     public Mono<MatchResponseDTO> buildMatchResponseDTO(Match match) {

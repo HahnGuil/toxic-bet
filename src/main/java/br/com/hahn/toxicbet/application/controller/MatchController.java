@@ -6,6 +6,7 @@ import br.com.hahn.toxicbet.application.service.MatchService;
 import br.com.hahn.toxicbet.model.MatchRequestDTO;
 import br.com.hahn.toxicbet.model.MatchResponseDTO;
 import br.com.hahn.toxicbet.model.UpdateScoreRequestDTO;
+import br.com.hahn.toxicbet.model.UserRequestDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -36,31 +37,25 @@ public class MatchController implements MatchApi {
 
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<MatchResponseDTO> streamAllMatches() {
-        // Initial load of all existing matches
         Flux<MatchResponseDTO> existingMatches = matchService.findAll();
 
-        // Stream of all events (match creation + odds updates)
         Flux<MatchResponseDTO> eventStream = matchEventPublisherService.getAllEventsStream();
 
-        // Merge initial load with real-time events
         return Flux.merge(existingMatches, eventStream)
                 .delayElements(Duration.ofSeconds(1));
     }
 
+//    TODO - END-POINT APENAS PARA FINS DE TESTES NO K6
     @GetMapping("/{id}")
     public Mono<MatchResponseDTO> getMatchById(@PathVariable Long id){
-        return matchService.getById(id).mapNotNull(response -> ResponseEntity.status(HttpStatus.OK).body(response).getBody());
+        return matchService.getById(id)
+                .mapNotNull(response ->
+                        ResponseEntity.status(HttpStatus.OK).body(response).getBody());
     }
 
     @Override
-    public Mono<ResponseEntity<MatchResponseDTO>> patchUpdateMatchScore(Long matchId, Mono<UpdateScoreRequestDTO> updateScoreRequestDTO, ServerWebExchange exchange) {
-        return updateScoreRequestDTO
-                .flatMap(dto -> matchService.updateMatchScore(
-                        matchId,
-                        dto.getHomeTeamScore(),
-                        dto.getVisitingTeamScore()
-                ))
-                .doOnSuccess(matchEventPublisherService::publishOddsUpdate)
-                .map(ResponseEntity::ok);
+    public Mono<ResponseEntity<Void>> patchCloseMatch(Long matchId, String result, ServerWebExchange exchange) {
+        return matchService.closeMatch(matchId, result)
+                .then(Mono.just(ResponseEntity.status(HttpStatus.NO_CONTENT).build()));
     }
 }

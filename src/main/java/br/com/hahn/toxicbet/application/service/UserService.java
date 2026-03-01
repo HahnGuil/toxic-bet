@@ -2,6 +2,7 @@ package br.com.hahn.toxicbet.application.service;
 
 import br.com.hahn.toxicbet.application.mapper.UserMapper;
 import br.com.hahn.toxicbet.domain.exception.NotFoundException;
+import br.com.hahn.toxicbet.domain.model.Bet;
 import br.com.hahn.toxicbet.domain.model.Users;
 import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
 import br.com.hahn.toxicbet.domain.repository.UserRepository;
@@ -22,6 +23,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final BetService betService;
 
 
     public Mono<UserResponseDTO> registerUser(UserRequestDTO userRequestDTO) {
@@ -38,7 +40,14 @@ public class UserService {
                     }));
     }
 
-    public Mono<Long> countAllUsers(){
-        return Mono.just(20L);
+    public Mono<Void> calculatedUserPoints(Long matchId, String result){
+        return betService.findByMatchId(matchId)
+                .filter(bet -> result.equals(bet.getResult().name()))
+                .flatMap(bet -> userRepository.findById(bet.getUserId())
+                        .flatMap(users -> {
+                            users.setUserPoints(users.getUserPoints() + bet.getUserPoint());
+                            return userRepository.save(users);
+                        })
+                ).then();
     }
 }
