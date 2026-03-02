@@ -2,6 +2,7 @@ package br.com.hahn.toxicbet.application.controller;
 
 import br.com.hahn.toxicbet.api.UsersApi;
 import br.com.hahn.toxicbet.application.service.UserService;
+import br.com.hahn.toxicbet.domain.model.dto.UserDTO;
 import br.com.hahn.toxicbet.infrastructure.service.JwtService;
 import br.com.hahn.toxicbet.model.UserRequestDTO;
 import br.com.hahn.toxicbet.model.UserResponseDTO;
@@ -12,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+
+import java.util.UUID;
 
 @RestController
 @Slf4j
@@ -32,5 +35,12 @@ public class UserController extends AbstractController implements UsersApi {
                                 .then(updateOAuthUserApplicationWithLogging(req.getEmail()).then(userService.registerUser(req)))
                 )
                 .map(response -> ResponseEntity.status(HttpStatus.CREATED).body(response));
+    }
+
+    @Override
+    public Mono<ResponseEntity<UserResponseDTO>> getUser(UUID userId, String userEmail, ServerWebExchange exchange) {
+        var userDTO = new UserDTO(userId, userEmail);
+        return userService.getUser(userDTO)
+                .map(userResponseDTO -> ResponseEntity.status(HttpStatus.OK).body(userResponseDTO));
     }
 }

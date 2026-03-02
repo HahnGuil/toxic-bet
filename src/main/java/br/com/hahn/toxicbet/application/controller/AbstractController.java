@@ -4,6 +4,7 @@ import br.com.hahn.toxicbet.infrastructure.service.JwtService;
 import br.com.hahn.toxicbet.util.DateTimeConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -23,12 +24,22 @@ public abstract class AbstractController {
 
     protected Mono<String> extractUserIdFromToken(ServerWebExchange exchange) {
         return Mono.defer(() -> exchange.getPrincipal()
-                .cast(org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken.class)
+                .cast(JwtAuthenticationToken.class)
+                .map(jwtAuth -> {
+                    var jwt = jwtAuth.getToken();
+                    return jwt.getClaim("user_id").toString();
+                })
+                .switchIfEmpty(Mono.error(new IllegalStateException("User ID not found in token")))
+        );
+    }
+
+    protected Mono<String> extracUserEmailFromToken(ServerWebExchange exchange){
+        return Mono.defer(() -> exchange.getPrincipal()
+                .cast(JwtAuthenticationToken.class)
                 .map(jwtAuth -> {
                     var jwt = jwtAuth.getToken();
                     return jwt.getSubject();
                 })
-                .switchIfEmpty(Mono.error(new IllegalStateException("User ID not found in token")))
-        );
+                .switchIfEmpty(Mono.error(new IllegalStateException("User email not foud in token"))));
     }
 }

@@ -55,6 +55,57 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDTO'
+    get:
+      tags:
+        - users
+      summary: Operation to retrieve a user
+      description: Retrieves detailed information about a specific user.
+      operationId: getUser
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: false
+          description: User id to find user
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+        - name: userEmail
+          in: path
+          required: false
+          description: User email to find user
+          schema:
+            type: string
+            format: email
+            pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            example: "usuario@exemplo.com"
+      responses:
+        '200':
+          description: User found successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponseDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                userNotFound:
+                  summary: User not found
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "User not found."
   /match:
     get:
       summary: Reactive stream of matches (SSE)
@@ -321,6 +372,124 @@ paths:
                   value:
                     timestamp: "2024-12-08T19:30:00Z"
                     message: "It is not permitted to place a bet on a match that has already started."
+
+  /bettingPoll/getByCode/{bettingPoolKey}:
+    post:
+      tags:
+        - betting_pool
+      summary: Operation to add a user to the betting pool.
+      description: The user uses this endpoint to join the shared betting pool.
+      operationId: postAddUserToBettingPool
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bettingPoolKey
+          in: path
+          required: true
+          description: Unique code of the betting pool
+          schema:
+            type: string
+            example: "A23BC45DE"
+      responses:
+        '201':
+          description: User Add To BettingPool
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponseDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '404':
+          description: Betting pool not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+    get:
+      tags:
+        - betting_pool
+      summary: Operation to find betting pool by unique code
+      description: The user who creates the betting pool shares it with other users using the unique code.
+      operationId: getBettingPoolByUniqueCode
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: bettingPoolKey
+          in: path
+          required: true
+          description: Unique code of the betting pool
+          schema:
+            type: string
+            example: "A23BC45DE"
+      responses:
+        '200':
+          description: Betting pool found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BettingPoolResponseDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '404':
+          description: Betting pool not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                bettingPoolNotFound:
+                  summary: BettingPool not Found
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Not found betting pool for this key"
+                userNotFound:
+                  summary: User not found
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "User not found, please register."
+
+  /bettingPool:
+    post:
+      tags:
+        - betting_pool
+      summary: Operation to register new betting Pool
+      description: Users wishing to register a betting pool must provide the pool's name. The system will return an ID and a code to identify the pool.
+      operationId: postBettingPool
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BettingPoolRequestDTO'
+      responses:
+          '201':
+            description: BettingPool successfully registered.
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/BetResponseDTO'
+          '400':
+            description: Invalid request
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponseDTO'
+          '401':
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponseDTO'
 components:
   schemas:
     ErrorResponseDTO:
@@ -380,7 +549,7 @@ components:
         homeTeamName:
           type: string
           description: Name of home team
-          example: "Brasil"
+          example: "Brazil"
         homeTeamScore:
           type: integer
           description: Score of the home team
@@ -449,9 +618,17 @@ components:
     UserResponseDTO:
       type: object
       properties:
-        message:
+        userId:
           type: string
-          example: User successfully registered
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        userName:
+          type: string
+          example: "John Doe"
+        userEmail:
+          type: string
+          format: email
+          example: "johnDoe@email.com"
     UpdateScoreRequestDTO:
       type: object
       required:
@@ -512,6 +689,29 @@ components:
           format: double
           description: Odds the user will receive if they win the bet.
           example: 2.45
+    BettingPoolRequestDTO:
+      type: object
+      properties:
+        bettingPoolName:
+          type: string
+          description: Name of bettingPool
+          example: "Old guys toxic bet"
+    BettingPoolResponseDTO:
+      type: object
+      properties:
+        idBettingPool:
+          type: integer
+          format: int64
+          description: ID of the betting poll
+          example: 1
+        bettingPoolName:
+          type: string
+          description: Name of betting pool
+          example: "Old guys toxic bet"
+        bettingPoolKey:
+          type: string
+          description: Unique code of betting pool
+          example: "A23BC45DE"
   securitySchemes:
     bearerAuth:
       type: http

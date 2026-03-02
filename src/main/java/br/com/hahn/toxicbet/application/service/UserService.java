@@ -2,8 +2,8 @@ package br.com.hahn.toxicbet.application.service;
 
 import br.com.hahn.toxicbet.application.mapper.UserMapper;
 import br.com.hahn.toxicbet.domain.exception.NotFoundException;
-import br.com.hahn.toxicbet.domain.model.Bet;
 import br.com.hahn.toxicbet.domain.model.Users;
+import br.com.hahn.toxicbet.domain.model.dto.UserDTO;
 import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
 import br.com.hahn.toxicbet.domain.repository.UserRepository;
 import br.com.hahn.toxicbet.model.UserRequestDTO;
@@ -28,7 +28,7 @@ public class UserService {
 
     public Mono<UserResponseDTO> registerUser(UserRequestDTO userRequestDTO) {
             return userRepository.save(userMapper.toEntity(userRequestDTO))
-                    .map(userMapper::toResponseDTO);
+                    .map(userMapper::toDTO);
     }
 
     public Mono<UUID> findUserByEmail(String email){
@@ -50,4 +50,12 @@ public class UserService {
                         })
                 ).then();
     }
+
+    public Mono<UserResponseDTO> getUser(UserDTO userDTO){
+        if (userDTO.userEmail() != null){
+            return userRepository.findByEmail(userDTO.userEmail()).map(userMapper::toDTO);
+        }
+        return userRepository.findById(userDTO.userId()).map(userMapper::toDTO);
+    }
+
 }

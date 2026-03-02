@@ -1,6 +1,5 @@
 package br.com.hahn.toxicbet.application.mapper;
 
-import br.com.hahn.toxicbet.domain.model.enums.SuccessMessages;
 import br.com.hahn.toxicbet.domain.model.Users;
 import br.com.hahn.toxicbet.model.UserRequestDTO;
 import br.com.hahn.toxicbet.model.UserResponseDTO;
@@ -18,11 +17,13 @@ public class UserMapper {
         user.setEmail(dto.getEmail());
         return user;
     }
-    
-    public UserResponseDTO toResponseDTO(Users user) {
+
+    public UserResponseDTO toDTO(Users user) {
         if (user == null) return null;
         UserResponseDTO resp = new UserResponseDTO();
-        resp.setMessage(SuccessMessages.REGISTER_USER.getMessage());
+        resp.setUserId(user.getId());
+        resp.setUserEmail(user.getEmail());
+        resp.setUserName(user.getName());
         return resp;
     }
 }
