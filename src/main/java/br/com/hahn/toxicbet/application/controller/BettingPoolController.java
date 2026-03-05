@@ -2,6 +2,7 @@ package br.com.hahn.toxicbet.application.controller;
 
 import br.com.hahn.toxicbet.api.BettingPoolApi;
 import br.com.hahn.toxicbet.application.service.BettingPoolService;
+import br.com.hahn.toxicbet.domain.model.dto.BettingPoolDTO;
 import br.com.hahn.toxicbet.domain.model.dto.UserDTO;
 import br.com.hahn.toxicbet.infrastructure.service.JwtService;
 import br.com.hahn.toxicbet.model.*;
@@ -32,12 +33,20 @@ public class BettingPoolController extends AbstractController implements Betting
     }
 
     @Override
-    public Mono<ResponseEntity<SuccessResponseDTO>> postAddUserToBettingPool(String bettingPoolKey, ServerWebExchange exchange) {
-        return null;
+    public Mono<ResponseEntity<BettingPoolUsersResponseDTO>> getUsersByBettingPool(String bettingPoolKey, ServerWebExchange exchange) {
+        return bettingPoolService.getBettingPoolUsers(bettingPoolKey)
+                .map(bettingPoolUsersResponseDTO -> ResponseEntity.status(HttpStatus.OK).body(bettingPoolUsersResponseDTO));
     }
 
     @Override
-    public Mono<ResponseEntity<BetResponseDTO>> postBettingPool(Mono<BettingPoolRequestDTO> bettingPoolRequestDTO, ServerWebExchange exchange) {
-        return null;
+    public Mono<ResponseEntity<SuccessResponseDTO>> patchAddUserToBettingPool(String bettingPoolKey, ServerWebExchange exchange) {
+        return bettingPoolService.addUserToBettingPool(bettingPoolKey, extractUserIdFromToken(exchange))
+                .map(successResponseDTO -> ResponseEntity.status(HttpStatus.OK).body(successResponseDTO));
+    }
+
+    @Override
+    public Mono<ResponseEntity<BettingPoolResponseDTO>> postBettingPool(Mono<BettingPoolRequestDTO> bettingPoolRequestDTO, ServerWebExchange exchange) {
+        return bettingPoolService.createBettingPool(bettingPoolRequestDTO, extractUserIdFromToken(exchange))
+                .map(bettingPoolResponseDTO -> ResponseEntity.status(HttpStatus.CREATED).body(bettingPoolResponseDTO));
     }
 }

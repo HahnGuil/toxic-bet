@@ -5,6 +5,7 @@ import br.com.hahn.toxicbet.domain.exception.NotFoundException;
 import br.com.hahn.toxicbet.domain.model.Users;
 import br.com.hahn.toxicbet.domain.model.dto.UserDTO;
 import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
+import br.com.hahn.toxicbet.domain.repository.BetRepository;
 import br.com.hahn.toxicbet.domain.repository.UserRepository;
 import br.com.hahn.toxicbet.model.UserRequestDTO;
 import br.com.hahn.toxicbet.model.UserResponseDTO;
@@ -23,7 +24,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final BetService betService;
+    private final BetRepository betRepository;
 
 
     public Mono<UserResponseDTO> registerUser(UserRequestDTO userRequestDTO) {
@@ -41,7 +42,7 @@ public class UserService {
     }
 
     public Mono<Void> calculatedUserPoints(Long matchId, String result){
-        return betService.findByMatchId(matchId)
+        return betRepository.findByMatchId(matchId)
                 .filter(bet -> result.equals(bet.getResult().name()))
                 .flatMap(bet -> userRepository.findById(bet.getUserId())
                         .flatMap(users -> {
@@ -49,6 +50,14 @@ public class UserService {
                             return userRepository.save(users);
                         })
                 ).then();
+    }
+
+    public Mono<Users> findById(UUID userId){
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.info("UserService: NOT_FOUND: Not found user with id: {}. Throw Not Found Exception at: {}", userId, DateTimeConverter.formatInstantNow());
+                    return Mono.error(new NotFoundException(ErrorMessages.USER_NOT_FOUND.getMessage()));
+                }));
     }
 
     public Mono<UserResponseDTO> getUser(UserDTO userDTO){

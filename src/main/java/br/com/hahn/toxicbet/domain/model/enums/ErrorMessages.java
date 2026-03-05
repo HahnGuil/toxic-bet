@@ -19,9 +19,10 @@ public enum ErrorMessages {
     CONFLICT_MATCH_TIME("One of the teams in the match already has a game scheduled for this date and time."),
     CAN_NOT_UPDATE_MATCH("Cannot update score for match not in progress"),
     MATCH_NOT_FOUND("Match not found for this id: "),
-    USER_NOT_FOUND("No user was found for the email address: "),
+    USER_NOT_FOUND("User not found!"),
     CHAMPIONSHIP_NOT_FOUND("Championship not found"),
-    MATCH_NOT_OPEN_TO_BETS("This match is not eligible for betting.");
+    MATCH_NOT_OPEN_TO_BETS("This match is not eligible for betting."),
+    BETTING_POOL_NOT_FOUND_KEY("Not found Betting Pool for the given key");
 
     private final String message;
 }

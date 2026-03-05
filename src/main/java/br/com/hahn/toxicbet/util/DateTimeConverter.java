@@ -2,10 +2,7 @@ package br.com.hahn.toxicbet.util;
 
 import reactor.core.publisher.Mono;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Locale;
@@ -24,6 +21,8 @@ import java.util.Objects;
  * @author HahnGuil
  */
 public final class DateTimeConverter {
+
+    private static final DateTimeFormatter MMAA = DateTimeFormatter.ofPattern("MMyy");
 
     /**
      * Formats the provided {@link Instant} into a string using the configured formatter.
@@ -100,6 +99,10 @@ public final class DateTimeConverter {
             return "";
         }
         return localDateTime.format(PARSER_NO_SECONDS);
+    }
+
+    public static String getMouthAndYear(){
+        return LocalDate.now().format(MMAA);
     }
 
     private static final DateTimeFormatter FORMATTER =

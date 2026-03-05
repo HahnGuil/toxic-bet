@@ -372,43 +372,40 @@ paths:
                   value:
                     timestamp: "2024-12-08T19:30:00Z"
                     message: "It is not permitted to place a bet on a match that has already started."
-
-  /bettingPoll/getByCode/{bettingPoolKey}:
+  /bettingPool:
     post:
       tags:
         - betting_pool
-      summary: Operation to add a user to the betting pool.
-      description: The user uses this endpoint to join the shared betting pool.
-      operationId: postAddUserToBettingPool
+      summary: Operation to register new betting Pool
+      description: Users wishing to register a betting pool must provide the pool's name. The system will return an ID and a code to identify the pool.
+      operationId: postBettingPool
       security:
-        - bearerAuth: []
-      parameters:
-        - name: bettingPoolKey
-          in: path
+        - bearerAuth: [ ]
+      requestBody:
           required: true
-          description: Unique code of the betting pool
-          schema:
-            type: string
-            example: "A23BC45DE"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BettingPoolRequestDTO'
       responses:
-        '201':
-          description: User Add To BettingPool
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SuccessResponseDTO'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponseDTO'
-        '404':
-          description: Betting pool not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponseDTO'
+          '201':
+            description: BettingPool successfully registered.
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/BettingPoolResponseDTO'
+          '400':
+            description: Invalid request
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponseDTO'
+          '401':
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponseDTO'
     get:
       tags:
         - betting_pool
@@ -455,41 +452,90 @@ paths:
                   value:
                     timestamp: "2024-12-08T19:30:00Z"
                     message: "User not found, please register."
-
-  /bettingPool:
-    post:
+    patch:
       tags:
         - betting_pool
-      summary: Operation to register new betting Pool
-      description: Users wishing to register a betting pool must provide the pool's name. The system will return an ID and a code to identify the pool.
-      operationId: postBettingPool
+      summary: Operation to add a user to the betting pool.
+      description: The user uses this endpoint to join the shared betting pool.
+      operationId: patchAddUserToBettingPool
       security:
         - bearerAuth: [ ]
-      requestBody:
+      parameters:
+        - name: bettingPoolKey
+          in: path
           required: true
+          description: Unique code of the betting pool
+          schema:
+            type: string
+            example: "A23BC45DE"
+      responses:
+        '201':
+          description: User Add To BettingPool
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BettingPoolRequestDTO'
+                $ref: '#/components/schemas/SuccessResponseDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '404':
+          description: Betting pool not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+
+  /bettingPoll/getUsers/{bettingPoolKey}:
+    get:
+      tags:
+        - betting_pool
+      summary: Operation to list users of bettingPool
+      description: List the users of bettingPool order by user points desc
+      operationId: getUsersByBettingPool
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: bettingPoolKey
+          in: path
+          required: true
+          description: Unique code of the betting pool
+          schema:
+            type: string
+            example: "A23BC45DE"
       responses:
-          '201':
-            description: BettingPool successfully registered.
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/BetResponseDTO'
-          '400':
-            description: Invalid request
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/ErrorResponseDTO'
-          '401':
-            description: Unauthorized
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/ErrorResponseDTO'
+        '200':
+          description: Betting pool found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BettingPoolUsersResponseDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '404':
+          description: Betting pool not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                bettingPoolNotFound:
+                  summary: BettingPool not Found
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Not found betting pool for this key"
+                userNotFound:
+                  summary: User not found
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "User not found, please register."
+
 components:
   schemas:
     ErrorResponseDTO:
@@ -696,6 +742,27 @@ components:
           type: string
           description: Name of bettingPool
           example: "Old guys toxic bet"
+    BettingPoolUsersResponseDTO:
+      type: object
+      properties:
+        bettingPoolId:
+          type: integer
+          format: int64
+          description: Betting Pool ID
+          example: 1
+        bettingPoolKey:
+          type: string
+          description: Unique Key of BettingPoll
+          example: "A23BC45DE"
+        users:
+          type: object
+          description: Map userName
+          additionalProperties:
+            type: number
+            format: double
+          example:
+            "John Coffee": 12.5
+            "Jane Doe": 7.0
     BettingPoolResponseDTO:
       type: object
       properties:
