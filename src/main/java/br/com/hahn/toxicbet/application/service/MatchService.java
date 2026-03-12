@@ -92,6 +92,17 @@ public class MatchService {
                .then();
     }
 
+    public Mono<Void> openMatch(Long matchId) {
+        return repository.findById(matchId)
+                .switchIfEmpty(Mono.error(new NotFoundException(ErrorMessages.MATCH_NOT_FOUND.getMessage() + matchId)))
+                .flatMap(match -> {
+                    match.setResult(Result.OPEN_FOR_BETTING);
+                    return repository.save(match);
+                })
+                .then();
+    }
+
+
     public Mono<MatchResponseDTO> buildMatchResponseDTO(Match match) {
         return Mono.zip(
                 teamService.findById(match.getHomeTeamId()),

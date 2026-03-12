@@ -32,7 +32,7 @@ public class UserController extends AbstractController implements UsersApi {
                 .flatMap(req ->
                         DateTimeConverter.formatInstantNowReactive()
                                 .doOnNext(ts -> log.info("UserController: Starting user registration for {} at: {}", req.getEmail(), ts))
-                                .then(updateOAuthUserApplicationWithLogging(req.getEmail()).then(userService.registerUser(req)))
+                                .then(updateOAuthUserApplication(req.getEmail()).then(userService.registerUser(req)))
                 )
                 .map(response -> ResponseEntity.status(HttpStatus.CREATED).body(response));
     }

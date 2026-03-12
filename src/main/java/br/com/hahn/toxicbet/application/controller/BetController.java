@@ -32,7 +32,7 @@ public class BetController extends AbstractController implements BetApi {
 
     @Override
     public Mono<ResponseEntity<BetResponseDTO>> postRegisterBet(Mono<BetRequestDTO> betRequestDTO, ServerWebExchange exchange) {
-        return extractUserIdFromToken(exchange)
+        return extractUserEmailFromToken(exchange)
                 .flatMap(userEmail -> betService.placeBet(betRequestDTO, userEmail))
                 .flatMap(betResponse ->
                         matchService.findById(betResponse.getMatchId())

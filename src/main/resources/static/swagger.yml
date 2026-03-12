@@ -107,6 +107,33 @@ paths:
                     timestamp: "2024-12-08T19:30:00Z"
                     message: "User not found."
   /match:
+    post:
+      tags:
+        - match
+      summary: Operation for registering matches
+      description: It is necessary to register the matches automatically. To do this, you need to consult the table of team relationships to find the IDs. A match must have home team, away team, result set to NOT_STARTED, and the start time.
+      operationId: postCreateMatch
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchRequestDTO'
+      responses:
+        '201':
+          description: Match successfully registered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchResponseDTO'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not Found
+        '422':
+          description: Matchmaking is not allowed.
     get:
       summary: Reactive stream of matches (SSE)
       description: Returns all existing matches and new creations of Server-Sent Events.
@@ -220,6 +247,66 @@ paths:
                   value:
                     timestamp: "2024-12-08T19:30:00Z"
                     message: "The reported match was not found."
+
+  /match/open:
+    patch:
+      tags:
+        - match
+      summary: Operation to open match for bet
+      description: This operation will open match to bet. It's a service endpoint for manual termination.
+      operationId: patchOpenMatch
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: matchId
+          in: query
+          required: true
+          description: ID of the match to be closed
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Match Open
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                missingToken:
+                  summary: Missing authentication token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Authentication token is required."
+                invalidToken:
+                  summary: Invalid or malformed token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Invalid authentication token."
+                expiredToken:
+                  summary: Expired token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Authentication token has expired."
+                authenticationFailed:
+                  summary: Authentication server connection failed
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Unable to authenticate. Please try again later."
+        '404':
+          description: Resource not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                matchNotFound:
+                  summary: Match not found
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "The reported match was not found"
   /scores:
     get:
       summary: Operation to retrieve the results of ongoing matches.
@@ -269,34 +356,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDTO'
-  /create:
-    post:
-      tags:
-        - match
-      summary: Operation for registering matches
-      description: It is necessary to register the matches automatically. To do this, you need to consult the table of team relationships to find the IDs. A match must have home team, away team, result set to NOT_STARTED, and the start time.
-      operationId: postCreateMatch
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MatchRequestDTO'
-      responses:
-        '201':
-          description: Match successfully registered.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MatchResponseDTO'
-        '401':
-          description: Unauthorized
-        '404':
-          description: Not Found
-        '422':
-          description: Matchmaking is not allowed.
   /bet:
     post:
       tags:

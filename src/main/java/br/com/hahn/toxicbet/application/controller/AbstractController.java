@@ -14,7 +14,7 @@ public abstract class AbstractController {
 
     protected final JwtService jwtService;
 
-    protected Mono<Void> updateOAuthUserApplicationWithLogging(String email) {
+    protected Mono<Void> updateOAuthUserApplication(String email) {
         return jwtService.updateOAuthUserApplication()
                 .onErrorResume(e -> {
                     log.error("AbstractController: Continuing despite OAuth check failure for user email: {} at: {}", email, DateTimeConverter.formatInstantNow());
@@ -33,7 +33,7 @@ public abstract class AbstractController {
         );
     }
 
-    protected Mono<String> extracUserEmailFromToken(ServerWebExchange exchange){
+    protected Mono<String> extractUserEmailFromToken(ServerWebExchange exchange){
         return Mono.defer(() -> exchange.getPrincipal()
                 .cast(JwtAuthenticationToken.class)
                 .map(jwtAuth -> {

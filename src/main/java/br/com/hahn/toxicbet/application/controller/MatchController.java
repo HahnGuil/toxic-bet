@@ -5,8 +5,6 @@ import br.com.hahn.toxicbet.application.service.MatchEventPublisherService;
 import br.com.hahn.toxicbet.application.service.MatchService;
 import br.com.hahn.toxicbet.model.MatchRequestDTO;
 import br.com.hahn.toxicbet.model.MatchResponseDTO;
-import br.com.hahn.toxicbet.model.UpdateScoreRequestDTO;
-import br.com.hahn.toxicbet.model.UserRequestDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -19,7 +17,6 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 
 @RestController
-@RequestMapping("/match")
 @RequiredArgsConstructor
 public class MatchController implements MatchApi {
 
@@ -56,6 +53,12 @@ public class MatchController implements MatchApi {
     @Override
     public Mono<ResponseEntity<Void>> patchCloseMatch(Long matchId, String result, ServerWebExchange exchange) {
         return matchService.closeMatch(matchId, result)
+                .then(Mono.just(ResponseEntity.status(HttpStatus.NO_CONTENT).build()));
+    }
+
+    @Override
+    public Mono<ResponseEntity<Void>> patchOpenMatch(Long matchId, ServerWebExchange exchange) {
+        return matchService.openMatch(matchId)
                 .then(Mono.just(ResponseEntity.status(HttpStatus.NO_CONTENT).build()));
     }
 }

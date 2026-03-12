@@ -45,7 +45,6 @@ public class BetProcessorService {
                 log.info("BetProcessorService: Creating new Sink for match {}", id);
                 Sinks.Many<BetRequest> newSink = Sinks.many().unicast().onBackpressureBuffer();
 
-                // Setup sequential processing with concatMap
                 newSink.asFlux()
                         .concatMap(betExecutorService::processBet)
                         .doOnError(error -> log.error("BetProcessorService: Error processing bet for match {}", id, error))

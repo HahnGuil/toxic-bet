@@ -61,8 +61,6 @@ public class BetExecutorService {
                 })
                 .then()
                 .onErrorResume(error -> {
-                    // Error already notified to sink in doOnError
-                    // Just return empty to continue processing chain
                     log.debug("BetExecutorService: Error handled, continuing to next bet");
                     return Mono.empty();
                 });

@@ -47,12 +47,12 @@ public class GlobalExceptionHandler {
     }
 
 //    500
-//    @ExceptionHandler(Exception.class)
-//    public Mono<ResponseEntity<ErrorResponseDTO>> handlerGenericException(Exception ex){
-//        log.error("GlobalHandler: A generic error was triggered. This is the trace: {}, at: {}", ex.getMessage(), DateTimeConverter.formatInstantNow());
-//        var error = createErrorResponse("Internal server error. Please try again later.", getInstanteNow());
-//        return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error));
-//    }
+    @ExceptionHandler(Exception.class)
+    public Mono<ResponseEntity<ErrorResponseDTO>> handlerGenericException(Exception ex){
+        log.error("GlobalHandler: A generic error was triggered. This is the trace: {}, at: {}", ex.getMessage(), DateTimeConverter.formatInstantNow());
+        var error = createErrorResponse("Internal server error. Please try again later.", getInstanteNow());
+        return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error));
+    }
 
 //    Util
     /**
