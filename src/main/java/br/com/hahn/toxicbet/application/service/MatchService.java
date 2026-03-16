@@ -61,14 +61,6 @@ public class MatchService {
                 }).count();
     }
 
-    public Mono<MatchResponseDTO> updateMatchScore(Long matchId, Integer homeScore, Integer visitingScore) {
-        return repository.findById(matchId)
-                .switchIfEmpty(Mono.error(new NotFoundException(ErrorMessages.MATCH_NOT_FOUND.getMessage() + matchId)))
-                .flatMap(match -> validateAndUpdateScore(match, homeScore, visitingScore))
-                .flatMap(repository::save)
-                .flatMap(this::buildMatchResponseDTO);
-    }
-
     public Flux<MatchResponseDTO> findAllInProgress() {
         return repository.findByResult(Result.IN_PROGRESS)
                 .flatMap(this::buildMatchResponseDTO);
@@ -144,8 +136,6 @@ public class MatchService {
     private Match prepareMatchEntity(MatchRequestDTO dto) {
         var entity = mapper.toEntity(dto);
         entity.setResult(Result.NOT_STARTED);
-        entity.setHomeTeamScore(BaseValues.INITIAL_ZERO.getIntValue());
-        entity.setVisitingTeamScore(BaseValues.INITIAL_ZERO.getIntValue());
         entity.setOddsHomeTeam(BaseValues.ODD_BASE_VALUE.getDoubleValue());
         entity.setOddsDraw(BaseValues.ODD_BASE_VALUE.getDoubleValue());
         entity.setOddsVisitingTeam(BaseValues.ODD_BASE_VALUE.getDoubleValue());
@@ -218,15 +208,4 @@ public class MatchService {
         return Mono.just(dto);
     }
 
-    private Mono<Match> validateAndUpdateScore(Match match, Integer homeScore, Integer visitingScore) {
-        if (match.getResult() != Result.IN_PROGRESS) {
-            log.error("MatchServe: UNPROCESSABLE_ENTITY: Cannot update match: {}, Throw InvalidMatchStateException at: {}", match.getId(), DateTimeConverter.formatInstantNow());
-            return Mono.error(new BusinessException(ErrorMessages.CAN_NOT_UPDATE_MATCH.getMessage()));
-        }
-
-        match.setHomeTeamScore(homeScore);
-        match.setVisitingTeamScore(visitingScore);
-
-        return Mono.just(match);
-    }
 }

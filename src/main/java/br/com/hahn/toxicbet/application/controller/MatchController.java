@@ -50,12 +50,16 @@ public class MatchController implements MatchApi {
                         ResponseEntity.status(HttpStatus.OK).body(response).getBody());
     }
 
+//    TODO - INCLUIR REQUEST PARA FECHAR PARTIDA PARA APOSTAS
+//    TODO - INCLUIR VALIDAÇÃO NO FLUXO, PARA SOMENTE UM USUÁRIO PODER USAR
+//    TODO - ANALISAR MUDANÇA DO NOVO CLOSEMATCH -> CLOSEMATCHTOBET
     @Override
     public Mono<ResponseEntity<Void>> patchCloseMatch(Long matchId, String result, ServerWebExchange exchange) {
         return matchService.closeMatch(matchId, result)
                 .then(Mono.just(ResponseEntity.status(HttpStatus.NO_CONTENT).build()));
     }
 
+    //    TODO - INCLUIR VALIDAÇÃO NO FLUXO, PARA SOMENTE UM USUÁRIO PODER USAR
     @Override
     public Mono<ResponseEntity<Void>> patchOpenMatch(Long matchId, ServerWebExchange exchange) {
         return matchService.openMatch(matchId)

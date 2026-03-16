@@ -67,4 +67,8 @@ public class UserService {
         return userRepository.findById(userDTO.userId()).map(userMapper::toDTO);
     }
 
+    public Mono<Boolean> existsByEmail(String email){
+        return userRepository.existsByEmail(email);
+    }
+
 }

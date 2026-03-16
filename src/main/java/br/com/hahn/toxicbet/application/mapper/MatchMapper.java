@@ -27,8 +27,6 @@ public class MatchMapper {
         dto.setHomeTeamName(homeTeamName);
         dto.setVisitingTeamName(visitingTeamName);
         dto.setMatchTime(DateTimeConverter.formatLocalDateTime(match.getMatchTime()));
-        dto.setHomeTeamScore(match.getHomeTeamScore());
-        dto.setVisitingTeamScore(match.getVisitingTeamScore());
         dto.setChampionshipName(championshipName);
         dto.setResult(MatchResponseDTO.ResultEnum.valueOf(match.getResult().toString()));
         dto.setHomeTeamOdds(match.getOddsHomeTeam());

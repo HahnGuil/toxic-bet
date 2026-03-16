@@ -21,6 +21,51 @@ tags:
     description: Operations for standings
 
 paths:
+  /users/existsByEmail/:
+    get:
+      tags:
+        - users
+      summary: OOperation to verify if the user is already registered in the application.
+      description: After successfully logging into the auth_server, it is recommended that the client verify if the logged-in user already exists in the application.
+      operationId: existsByEmail
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: userEmail
+          in: query
+          required: true
+          description: user email to verification
+          schema:
+            type: string
+            format: email
+            example: "userEmaik@email.com"
+      responses:
+        '200':
+          description: Returns true if a user with this email exists, otherwise false.
+          content:
+            application/json:
+              schema:
+                type: boolean
+              examples:
+                exists:
+                  summary: User exists
+                  value: true
+                notExists:
+                  summary: User does not exist
+                  value: false
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+
   /users:
     post:
       tags:
@@ -655,18 +700,10 @@ components:
           type: string
           description: Name of home team
           example: "Brazil"
-        homeTeamScore:
-          type: integer
-          description: Score of the home team
-          example: 1
         visitingTeamName:
           type: string
           description: Name of visiting team
           example: "USA"
-        visitingTeamScore:
-          type: integer
-          description: Score of the visiting team
-          example: 1
         championshipName:
           type: string
           description: Championship for which the match is valid.

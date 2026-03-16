@@ -43,4 +43,10 @@ public class UserController extends AbstractController implements UsersApi {
         return userService.getUser(userDTO)
                 .map(userResponseDTO -> ResponseEntity.status(HttpStatus.OK).body(userResponseDTO));
     }
+
+    @Override
+    public Mono<ResponseEntity<Boolean>> existsByEmail(String userEmail, ServerWebExchange exchange) {
+        Mono<Boolean> response = userService.existsByEmail(userEmail);
+        return response.map(exists -> ResponseEntity.status(HttpStatus.OK).body(exists));
+    }
 }
