@@ -1,5 +1,6 @@
 package br.com.hahn.toxicbet.domain.model;
 
+import br.com.hahn.toxicbet.domain.model.enums.Role;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -28,4 +29,7 @@ public class Users {
 
     @Column("user_points")
     private Double userPoints;
+
+    @Column("role")
+    private Role role;
 }

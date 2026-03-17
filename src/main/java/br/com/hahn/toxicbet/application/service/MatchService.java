@@ -8,6 +8,7 @@ import br.com.hahn.toxicbet.domain.model.Team;
 import br.com.hahn.toxicbet.domain.model.enums.BaseValues;
 import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
 import br.com.hahn.toxicbet.domain.model.enums.Result;
+import br.com.hahn.toxicbet.domain.model.enums.Role;
 import br.com.hahn.toxicbet.domain.repository.MatchRepository;
 import br.com.hahn.toxicbet.model.MatchRequestDTO;
 import br.com.hahn.toxicbet.model.MatchResponseDTO;
@@ -74,24 +75,37 @@ public class MatchService {
                 }));
     }
 
-    public Mono<Void> closeMatch(Long matchId, String result){
-       return userService.calculatedUserPoints(matchId, result)
-               .then(this.findById(matchId))
-               .flatMap(match -> {
-                   match.setResult(Result.valueOf(result));
-                   return repository.save(match);
-               })
-               .then();
+    public Mono<Void> closeMatch(Long matchId, String result, String email){
+        return isUserAdmin(email)
+                .then(repository.findById(matchId)
+                        .switchIfEmpty(Mono.error(new NotFoundException(ErrorMessages.MATCH_NOT_OPEN_TO_BETS.getMessage())))
+                        .flatMap(match -> {
+                            match.setResult(Result.valueOf(result));
+                            return repository.save(match);
+                        })
+                        .then());
     }
 
-    public Mono<Void> openMatch(Long matchId) {
-        return repository.findById(matchId)
-                .switchIfEmpty(Mono.error(new NotFoundException(ErrorMessages.MATCH_NOT_FOUND.getMessage() + matchId)))
-                .flatMap(match -> {
-                    match.setResult(Result.OPEN_FOR_BETTING);
-                    return repository.save(match);
-                })
-                .then();
+    public Mono<Void> openMatch(Long matchId, String email) {
+        return isUserAdmin(email)
+                .then(repository.findById(matchId)
+                        .switchIfEmpty(Mono.error(new NotFoundException(ErrorMessages.MATCH_NOT_OPEN_TO_BETS.getMessage())))
+                        .flatMap(match -> {
+                            match.setResult(Result.IN_PROGRESS);
+                            return repository.save(match);
+                        })
+                        .then());
+    }
+
+    public Mono<Void> closeMatchForBet(Long matchId, String email) {
+        return isUserAdmin(email)
+                .then(repository.findById(matchId)
+                        .switchIfEmpty(Mono.error(new NotFoundException(ErrorMessages.MATCH_NOT_OPEN_TO_BETS.getMessage())))
+                        .flatMap(match -> {
+                            match.setResult(Result.IN_PROGRESS);
+                            return repository.save(match);
+                        })
+                        .then());
     }
 
 
@@ -155,6 +169,20 @@ public class MatchService {
         }
         return Mono.just(dto);
     }
+
+    private Mono<Void> isUserAdmin(String email) {
+        return userService.findUserByEmail(email)
+                .flatMap(userService::findById)
+                .flatMap(user -> {
+                    if (!Role.ADMIN.equals(user.getRole())) {
+                        log.error("MatchService: UNAUTHORIZED: User {} does not have ADMIN role at: {}", email, DateTimeConverter.formatInstantNow());
+                        return Mono.error(new NotAuthorizedException(ErrorMessages.UNAUTHORIZED_MESSAGE.getMessage()));
+                    }
+                    return Mono.empty();
+                })
+                .then();
+    }
+
 
     private Mono<MatchRequestDTO> validateTeamsAreDifferent(MatchRequestDTO dto) {
         if (dto.getHomeTeamId().equals(dto.getVisitingTeamId())) {

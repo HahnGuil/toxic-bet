@@ -151,6 +151,65 @@ paths:
                   value:
                     timestamp: "2024-12-08T19:30:00Z"
                     message: "User not found."
+  /match/end-bet:
+    patch:
+      tags:
+        - match
+      summary: Operation to close a match for bets
+      description: This operation will close the match, when is time to end the bet. It's a service endpoint for manual termination.
+      operationId: closeMatchForBet
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: matchId
+          in: query
+          required: true
+          description: ID of the match to be closed for bet
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Match Close for bet
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                missingToken:
+                  summary: Missing authentication token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Authentication token is required."
+                invalidToken:
+                  summary: Invalid or malformed token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Invalid authentication token."
+                expiredToken:
+                  summary: Expired token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Authentication token has expired."
+                authenticationFailed:
+                  summary: Authentication server connection failed
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Unable to authenticate. Please try again later."
+        '404':
+          description: Resource not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                matchNotFound:
+                  summary: Match not found
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "The reported match was not found."
   /match:
     post:
       tags:
