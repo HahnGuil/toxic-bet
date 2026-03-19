@@ -6,7 +6,6 @@ import br.com.hahn.toxicbet.application.service.MatchService;
 import br.com.hahn.toxicbet.infrastructure.service.JwtService;
 import br.com.hahn.toxicbet.model.MatchRequestDTO;
 import br.com.hahn.toxicbet.model.MatchResponseDTO;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -29,12 +28,11 @@ public class MatchController extends AbstractController implements MatchApi {
         this.matchEventPublisherService = matchEventPublisherService;
     }
 
-
     @Override
     public Mono<ResponseEntity<MatchResponseDTO>> postCreateMatch(Mono<MatchRequestDTO> matchRequestDTO, ServerWebExchange exchange) {
-        return matchService.createMatchDto(matchRequestDTO)
-                .doOnSuccess(matchEventPublisherService::publishMatchCreated)
-                .map(response -> ResponseEntity.status(HttpStatus.CREATED).body(response));
+        return extractUserEmailFromToken(exchange)
+                .flatMap(userEmail -> matchService.createMatchDto(matchRequestDTO, userEmail))
+                .map(matchResponseDTO -> ResponseEntity.status(HttpStatus.CREATED).body(matchResponseDTO));
     }
 
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)

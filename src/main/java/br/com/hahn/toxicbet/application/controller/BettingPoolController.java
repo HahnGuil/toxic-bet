@@ -2,21 +2,16 @@ package br.com.hahn.toxicbet.application.controller;
 
 import br.com.hahn.toxicbet.api.BettingPoolApi;
 import br.com.hahn.toxicbet.application.service.BettingPoolService;
-import br.com.hahn.toxicbet.domain.model.dto.BettingPoolDTO;
-import br.com.hahn.toxicbet.domain.model.dto.UserDTO;
 import br.com.hahn.toxicbet.infrastructure.service.JwtService;
 import br.com.hahn.toxicbet.model.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.util.UUID;
-
 @RestController
-@RequestMapping("/bettingPool")
 public class BettingPoolController extends AbstractController implements BettingPoolApi {
 
     private final BettingPoolService bettingPoolService;
@@ -46,7 +41,7 @@ public class BettingPoolController extends AbstractController implements Betting
 
     @Override
     public Mono<ResponseEntity<BettingPoolResponseDTO>> postBettingPool(Mono<BettingPoolRequestDTO> bettingPoolRequestDTO, ServerWebExchange exchange) {
-        return bettingPoolService.createBettingPool(bettingPoolRequestDTO, extractUserIdFromToken(exchange))
+        return bettingPoolService.createBettingPool(bettingPoolRequestDTO, extractUserEmailFromToken(exchange))
                 .map(bettingPoolResponseDTO -> ResponseEntity.status(HttpStatus.CREATED).body(bettingPoolResponseDTO));
     }
 }

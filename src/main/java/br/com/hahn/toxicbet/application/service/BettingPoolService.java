@@ -30,22 +30,20 @@ public class BettingPoolService {
     private final BetPoolMapper betPoolMapper;
     private final UserService userService;
 
-    public Mono<BettingPoolResponseDTO> createBettingPool(Mono<BettingPoolRequestDTO> requestDTOMono, Mono<String> userId) {
+    public Mono<BettingPoolResponseDTO> createBettingPool(Mono<BettingPoolRequestDTO> requestDTOMono, Mono<String> userEmailMono) {
         return requestDTOMono
-                .flatMap(requestDTO ->
-                        generateKeyForBettingPool()
-                                .map(key -> new BettingPoolDTO(
-                                        UUID.fromString(String.valueOf(userId)),
-                                        key,
-                                        requestDTO.getBettingPoolName()
+                .zipWith(userEmailMono)
+                .flatMap(tuple ->
+                        userService.findUserByEmail(tuple.getT2())
+                                .zipWith(generateKeyForBettingPool())
+                                .map(result -> new BettingPoolDTO(
+                                        result.getT1(),
+                                        tuple.getT1().getBettingPoolName(),
+                                        result.getT2()
                                 ))
                 )
                 .map(betPoolMapper::toEntity)
                 .flatMap(bettingPoolRepository::save)
-                .map(pool -> {
-                    log.info("BettingPoolService: ");
-                    return pool;
-                })
                 .map(betPoolMapper::toDTO);
     }
 
@@ -57,12 +55,18 @@ public class BettingPoolService {
     public Mono<SuccessResponseDTO> addUserToBettingPool(String bettingPoolKey, Mono<String> userId){
         return bettingPoolRepository.findBettingPoolByBettingPoolKey(bettingPoolKey)
                 .switchIfEmpty(Mono.error(new NotFoundException(ErrorMessages.BETTING_POOL_NOT_FOUND_KEY.getMessage())))
-                .flatMap(bettingPool -> {
+                .zipWith(userId)
+                .flatMap(tuple -> {
+                    var bettingPool = tuple.getT1();
+                    var userIdValue = tuple.getT2();
+
                     List<String> users = bettingPool.getUserIds();
-                    users.add(String.valueOf(userId));
+                    users.add(userIdValue);
                     bettingPool.setUserIds(users);
+
                     return bettingPoolRepository.save(bettingPool)
-                            .thenReturn(new SuccessResponseDTO().message("User Added successfully for Betting Pool: " + bettingPool.getBettingPoolName()));
+                            .thenReturn(new SuccessResponseDTO().message(
+                                    "User Added successfully for Betting Pool: " + bettingPool.getBettingPoolName()));
                 });
     }
 

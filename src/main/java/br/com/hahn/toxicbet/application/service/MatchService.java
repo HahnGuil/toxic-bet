@@ -33,8 +33,9 @@ public class MatchService {
     private final UserService userService;
 
 
-    public Mono<MatchResponseDTO> createMatchDto(Mono<MatchRequestDTO> matchRequestDTOMono) {
+    public Mono<MatchResponseDTO> createMatchDto(Mono<MatchRequestDTO> matchRequestDTOMono, String userEmail) {
         return matchRequestDTOMono
+                .flatMap(dto -> isUserAdmin(userEmail).thenReturn(dto))
                 .flatMap(this::isMatchTimeValid)
                 .flatMap(this::validatesTeamNotPlayingAtTheScheduledTime)
                 .flatMap(this::validateTeamsAreDifferent)
@@ -62,11 +63,6 @@ public class MatchService {
                 }).count();
     }
 
-    public Flux<MatchResponseDTO> findAllInProgress() {
-        return repository.findByResult(Result.IN_PROGRESS)
-                .flatMap(this::buildMatchResponseDTO);
-    }
-
     public Mono<Match> findById(Long id){
         return repository.findById(id)
                 .switchIfEmpty(Mono.defer(() -> {
@@ -91,7 +87,7 @@ public class MatchService {
                 .then(repository.findById(matchId)
                         .switchIfEmpty(Mono.error(new NotFoundException(ErrorMessages.MATCH_NOT_OPEN_TO_BETS.getMessage())))
                         .flatMap(match -> {
-                            match.setResult(Result.IN_PROGRESS);
+                            match.setResult(Result.OPEN_FOR_BETTING);
                             return repository.save(match);
                         })
                         .then());
@@ -176,7 +172,7 @@ public class MatchService {
                 .flatMap(user -> {
                     if (!Role.ADMIN.equals(user.getRole())) {
                         log.error("MatchService: UNAUTHORIZED: User {} does not have ADMIN role at: {}", email, DateTimeConverter.formatInstantNow());
-                        return Mono.error(new NotAuthorizedException(ErrorMessages.UNAUTHORIZED_MESSAGE.getMessage()));
+                        return Mono.error(new NotAuthorizedException(ErrorMessages.FORBIDDEN_OPERATION.getMessage()));
                     }
                     return Mono.empty();
                 })
@@ -231,7 +227,7 @@ public class MatchService {
     private Mono<MatchRequestDTO> handleConflictResult(boolean hasConflict, MatchRequestDTO dto) {
         if (hasConflict) {
             log.error("MathService: CONFLICT: Team already involved at match. Throw ConflictMatchTimeException at: {}", DateTimeConverter.formatInstantNow());
-            return Mono.error(new ConflictException(ErrorMessages.CONFLICT_MATCH_TIME.getMessage()));
+            return Mono.error(new BusinessException(ErrorMessages.CONFLICT_MATCH_TIME.getMessage()));
         }
         return Mono.just(dto);
     }
