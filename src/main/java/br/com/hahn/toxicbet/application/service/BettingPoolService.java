@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,14 +31,13 @@ public class BettingPoolService {
 
     public Mono<BettingPoolResponseDTO> createBettingPool(Mono<BettingPoolRequestDTO> requestDTOMono, Mono<String> userEmailMono) {
         return requestDTOMono
-                .zipWith(userEmailMono)
+                .zipWith(findUserIdByEmail(userEmailMono))
                 .flatMap(tuple ->
-                        userService.findUserByEmail(tuple.getT2())
-                                .zipWith(generateKeyForBettingPool())
-                                .map(result -> new BettingPoolDTO(
-                                        result.getT1(),
+                        generateKeyForBettingPool()
+                                .map(key -> new BettingPoolDTO(
+                                        tuple.getT2(),
                                         tuple.getT1().getBettingPoolName(),
-                                        result.getT2()
+                                        key
                                 ))
                 )
                 .map(betPoolMapper::toEntity)
@@ -52,22 +50,26 @@ public class BettingPoolService {
                 .map(betPoolMapper::toDTO);
     }
 
-    public Mono<SuccessResponseDTO> addUserToBettingPool(String bettingPoolKey, Mono<String> userId){
+    public Mono<SuccessResponseDTO> addUserToBettingPool(String bettingPoolKey, Mono<String> userEmailMono){
         return bettingPoolRepository.findBettingPoolByBettingPoolKey(bettingPoolKey)
                 .switchIfEmpty(Mono.error(new NotFoundException(ErrorMessages.BETTING_POOL_NOT_FOUND_KEY.getMessage())))
-                .zipWith(userId)
+                .zipWith(findUserIdByEmail(userEmailMono))
                 .flatMap(tuple -> {
                     var bettingPool = tuple.getT1();
-                    var userIdValue = tuple.getT2();
+                    var userId = tuple.getT2().toString();
 
                     List<String> users = bettingPool.getUserIds();
-                    users.add(userIdValue);
+                    users.add(userId);
                     bettingPool.setUserIds(users);
 
                     return bettingPoolRepository.save(bettingPool)
                             .thenReturn(new SuccessResponseDTO().message(
                                     "User Added successfully for Betting Pool: " + bettingPool.getBettingPoolName()));
                 });
+    }
+
+    private Mono<UUID> findUserIdByEmail(Mono<String> userEmailMono) {
+        return userEmailMono.flatMap(userService::findUserByEmail);
     }
 
     public Mono<BettingPoolUsersResponseDTO> getBettingPoolUsers(String bettingPoolKey){

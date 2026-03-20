@@ -310,7 +310,7 @@ paths:
       description: Returns all existing matches and new creations of Server-Sent Events.
       operationId: streamAllMatches
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       responses:
         '200':
           description: Stream of matches (text/event-stream)

@@ -35,7 +35,7 @@ public class MatchController extends AbstractController implements MatchApi {
                 .map(matchResponseDTO -> ResponseEntity.status(HttpStatus.CREATED).body(matchResponseDTO));
     }
 
-    @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping(value = "/match", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<MatchResponseDTO> streamAllMatches() {
         Flux<MatchResponseDTO> existingMatches = matchService.findAll();
         Flux<MatchResponseDTO> eventStream = matchEventPublisherService.getAllEventsStream();

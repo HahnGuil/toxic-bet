@@ -6,7 +6,6 @@ import br.com.hahn.toxicbet.infrastructure.service.JwtService;
 import br.com.hahn.toxicbet.model.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -35,7 +34,7 @@ public class BettingPoolController extends AbstractController implements Betting
 
     @Override
     public Mono<ResponseEntity<SuccessResponseDTO>> patchAddUserToBettingPool(String bettingPoolKey, ServerWebExchange exchange) {
-        return bettingPoolService.addUserToBettingPool(bettingPoolKey, extractUserIdFromToken(exchange))
+        return bettingPoolService.addUserToBettingPool(bettingPoolKey, extractUserEmailFromToken(exchange))
                 .map(successResponseDTO -> ResponseEntity.status(HttpStatus.OK).body(successResponseDTO));
     }
 
