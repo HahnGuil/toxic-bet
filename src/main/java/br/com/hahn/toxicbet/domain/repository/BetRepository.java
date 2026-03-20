@@ -7,4 +7,5 @@ import reactor.core.publisher.Flux;
 public interface BetRepository extends ReactiveCrudRepository<Bet, Long> {
 
     Flux<Bet> findByMatchId(Long matchId);
+
 }

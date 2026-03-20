@@ -76,11 +76,15 @@ public class MatchService {
                 .then(repository.findById(matchId)
                         .switchIfEmpty(Mono.error(new NotFoundException(ErrorMessages.MATCH_NOT_OPEN_TO_BETS.getMessage())))
                         .flatMap(match -> {
-                            match.setResult(Result.valueOf(result));
-                            return repository.save(match);
+                            Result finalResult = Result.valueOf(result);
+                            match.setResult(finalResult);
+
+                            return repository.save(match)
+                                    .then(userService.calculatedUserPoints(matchId, finalResult.name()));
                         })
                         .then());
     }
+
 
     public Mono<Void> openMatch(Long matchId, String email) {
         return isUserAdmin(email)

@@ -46,7 +46,7 @@ public class UserService {
                 .filter(bet -> result.equals(bet.getResult().name()))
                 .flatMap(bet -> userRepository.findById(bet.getUserId())
                         .flatMap(users -> {
-                            users.setUserPoints(users.getUserPoints() + bet.getUserPoint());
+                            users.setUserPoints((users.getUserPoints() != null ? users.getUserPoints() : 0.0) + bet.getUserPoint());
                             return userRepository.save(users);
                         })
                 ).then();
