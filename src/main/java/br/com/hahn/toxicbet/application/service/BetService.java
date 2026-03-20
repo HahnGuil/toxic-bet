@@ -1,16 +1,13 @@
 package br.com.hahn.toxicbet.application.service;
 
 import br.com.hahn.toxicbet.domain.exception.BusinessException;
-import br.com.hahn.toxicbet.domain.model.Bet;
 import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
 import br.com.hahn.toxicbet.domain.model.enums.Result;
-import br.com.hahn.toxicbet.domain.repository.BetRepository;
 import br.com.hahn.toxicbet.model.BetRequestDTO;
 import br.com.hahn.toxicbet.model.BetResponseDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
@@ -19,7 +16,6 @@ import reactor.core.publisher.Mono;
 public class BetService {
 
     private final BetProcessorService betProcessorService;
-    private final BetRepository betRepository;
     private final MatchService matchService;
 
     public Mono<BetResponseDTO> placeBet(Mono<BetRequestDTO> betRequestDTOMono, String userEmail) {
