@@ -2,6 +2,7 @@ package br.com.hahn.toxicbet.application.service;
 
 import br.com.hahn.toxicbet.application.mapper.BetPoolMapper;
 import br.com.hahn.toxicbet.domain.exception.NotFoundException;
+import br.com.hahn.toxicbet.domain.model.BettingPool;
 import br.com.hahn.toxicbet.domain.model.Users;
 import br.com.hahn.toxicbet.domain.model.dto.BettingPoolDTO;
 import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
@@ -32,6 +33,7 @@ public class BettingPoolService {
     public Mono<BettingPoolResponseDTO> createBettingPool(Mono<BettingPoolRequestDTO> requestDTOMono, Mono<String> userEmailMono) {
         return requestDTOMono
                 .zipWith(findUserIdByEmail(userEmailMono))
+                .doOnSubscribe(subscription -> log.info("BettingPoolService: Starting betting pool creation"))
                 .flatMap(tuple ->
                         generateKeyForBettingPool()
                                 .map(key -> new BettingPoolDTO(
@@ -42,8 +44,10 @@ public class BettingPoolService {
                 )
                 .map(betPoolMapper::toEntity)
                 .flatMap(bettingPoolRepository::save)
-                .map(betPoolMapper::toDTO);
+                .map(betPoolMapper::toDTO)
+                .doOnError(error -> log.error("BettingPoolService: Error while creating betting pool: {}", error.getMessage(), error));
     }
+
 
     public Mono<BettingPoolResponseDTO> getBettingPoolByKey(String bettingPoolKey){
         return bettingPoolRepository.findBettingPoolByBettingPoolKey(bettingPoolKey)
@@ -51,9 +55,10 @@ public class BettingPoolService {
     }
 
     public Mono<SuccessResponseDTO> addUserToBettingPool(String bettingPoolKey, Mono<String> userEmailMono){
-        return bettingPoolRepository.findBettingPoolByBettingPoolKey(bettingPoolKey)
-                .switchIfEmpty(Mono.error(new NotFoundException(ErrorMessages.BETTING_POOL_NOT_FOUND_KEY.getMessage())))
+        return findByBettingPoolKey(bettingPoolKey)
                 .zipWith(findUserIdByEmail(userEmailMono))
+                .doOnSubscribe(subscription ->
+                        log.info("BettingPoolService: Add user: {} to bettingPool with code: {}", userEmailMono, bettingPoolKey))
                 .flatMap(tuple -> {
                     var bettingPool = tuple.getT1();
                     var userId = tuple.getT2().toString();
@@ -64,7 +69,8 @@ public class BettingPoolService {
 
                     return bettingPoolRepository.save(bettingPool)
                             .thenReturn(new SuccessResponseDTO().message(
-                                    "User Added successfully for Betting Pool: " + bettingPool.getBettingPoolName()));
+                                    "User Added successfully for Betting Pool: " + bettingPool.getBettingPoolName()))
+                            .doOnError(error -> log.error("BettingPoolService: Error while add user to bettingPool: {}", error.getMessage(), error));
                 });
     }
 
@@ -73,7 +79,8 @@ public class BettingPoolService {
     }
 
     public Mono<BettingPoolUsersResponseDTO> getBettingPoolUsers(String bettingPoolKey){
-        return bettingPoolRepository.findBettingPoolByBettingPoolKey(bettingPoolKey)
+        return findByBettingPoolKey(bettingPoolKey)
+                .doOnSubscribe(subscription -> log.info("BettingPoolService: Get User from bettingPoool with key: {}", bettingPoolKey))
                 .flatMap(bettingPool ->
                         Flux.fromIterable(bettingPool.getUserIds())
                                 .map(UUID::fromString)
@@ -91,6 +98,13 @@ public class BettingPoolService {
                                 .map(usersMap -> betPoolMapper.toBettingPoolUserDTO(bettingPool, usersMap))
                 );
 
+    }
+
+    private Mono<BettingPool> findByBettingPoolKey(String bettingPoolKey){
+        return bettingPoolRepository.findBettingPoolByBettingPoolKey(bettingPoolKey)
+                .switchIfEmpty(Mono.error(new NotFoundException(ErrorMessages.BETTING_POOL_NOT_FOUND_KEY.getMessage())))
+                .doOnError(erro ->
+                        log.error("BettingPoolService: NOT_FOUND. Not found bettingPool with key: {}. Throw NotFoundExcepton", bettingPoolKey));
     }
 
     private Map.Entry<String, Double> toUserEntity(Users users){

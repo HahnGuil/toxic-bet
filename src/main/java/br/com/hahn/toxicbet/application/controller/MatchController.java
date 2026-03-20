@@ -63,13 +63,4 @@ public class MatchController extends AbstractController implements MatchApi {
                 .flatMap(userEmail -> matchService.openMatch(matchId, userEmail))
                 .then(Mono.just(ResponseEntity.status(HttpStatus.NO_CONTENT).build()));
     }
-
-
-    //    TODO - END-POINT APENAS PARA FINS DE TESTES NO K6
-    @GetMapping("/{id}")
-    public Mono<MatchResponseDTO> getMatchById(@PathVariable Long id){
-        return matchService.getById(id)
-                .mapNotNull(response ->
-                        ResponseEntity.status(HttpStatus.OK).body(response).getBody());
-    }
 }

@@ -22,24 +22,20 @@ public abstract class AbstractController {
                 });
     }
 
-    protected Mono<String> extractUserIdFromToken(ServerWebExchange exchange) {
+    protected Mono<String> extractUserEmailFromToken(ServerWebExchange exchange) {
         return Mono.defer(() -> exchange.getPrincipal()
                 .cast(JwtAuthenticationToken.class)
-                .map(jwtAuth -> {
-                    var jwt = jwtAuth.getToken();
-                    return jwt.getClaim("user_id").toString();
-                })
-                .switchIfEmpty(Mono.error(new IllegalStateException("User ID not found in token")))
-        );
+                .map(JwtAuthenticationToken::getToken)
+                .flatMap(jwt -> Mono.justOrEmpty(jwt.getSubject()))
+                .filter(email -> !email.isBlank())
+                .switchIfEmpty(Mono.error(new IllegalStateException("User email not found in token")))
+                .doOnError(error -> log.error(
+                        "AbstractController: Failed to extract user email from token. path={}, at={}, reason={}",
+                        exchange.getRequest().getPath().value(),
+                        DateTimeConverter.formatInstantNow(),
+                        error.getMessage(),
+                        error
+                )));
     }
 
-    protected Mono<String> extractUserEmailFromToken(ServerWebExchange exchange){
-        return Mono.defer(() -> exchange.getPrincipal()
-                .cast(JwtAuthenticationToken.class)
-                .map(jwtAuth -> {
-                    var jwt = jwtAuth.getToken();
-                    return jwt.getSubject();
-                })
-                .switchIfEmpty(Mono.error(new IllegalStateException("User email not foud in token"))));
-    }
 }

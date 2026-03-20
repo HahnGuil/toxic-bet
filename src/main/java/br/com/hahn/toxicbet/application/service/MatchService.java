@@ -46,14 +46,11 @@ public class MatchService {
         return repository.findAll().flatMap(this::buildMatchResponseDTO);
     }
 
-    public Mono<MatchResponseDTO> getById(Long id){
-        return findById(id).flatMap(this::buildMatchResponseDTO);
-    }
-
     public Mono<Long> updateMatchesToInProgress(){
         return repository.findAll()
                 .filter(match -> match.getResult() == Result.NOT_STARTED)
                 .filter(match -> match.getMatchTime().isBefore(LocalDateTime.now()))
+                .doOnSubscribe(subscription -> log.info("MatchService: Update matches result to Not Started"))
                 .flatMap(match -> {
                     match.setResult(Result.IN_PROGRESS);
                     match.setOddsHomeTeam(BaseValues.ODD_BASE_VALUE.getDoubleValue());
@@ -73,6 +70,8 @@ public class MatchService {
 
     public Mono<Void> closeMatch(Long matchId, String result, String email){
         return isUserAdmin(email)
+                .doOnSubscribe(subscription ->
+                        log.info("MatchService: User: {}, is close match: {} with result: {} at: {}", email, matchId, result, DateTimeConverter.formatInstantNow()))
                 .then(repository.findById(matchId)
                         .switchIfEmpty(Mono.error(new NotFoundException(ErrorMessages.MATCH_NOT_OPEN_TO_BETS.getMessage())))
                         .flatMap(match -> {
@@ -82,12 +81,16 @@ public class MatchService {
                             return repository.save(match)
                                     .then(userService.calculatedUserPoints(matchId, finalResult.name()));
                         })
-                        .then());
+                        .then())
+                .doOnSuccess(success ->
+                        log.info("MatchService: Match: {} is closed with result: {}, for user: {} at: {}", matchId, result, email, DateTimeConverter.formatInstantNow()));
     }
 
 
     public Mono<Void> openMatch(Long matchId, String email) {
         return isUserAdmin(email)
+                .doOnSubscribe(subscription ->
+                        log.info("MatchService: User: {}, is open match: {} for bets at: {}", email, matchId, DateTimeConverter.formatInstantNow()))
                 .then(repository.findById(matchId)
                         .switchIfEmpty(Mono.error(new NotFoundException(ErrorMessages.MATCH_NOT_OPEN_TO_BETS.getMessage())))
                         .flatMap(match -> {
@@ -99,6 +102,8 @@ public class MatchService {
 
     public Mono<Void> closeMatchForBet(Long matchId, String email) {
         return isUserAdmin(email)
+                .doOnSubscribe(subscription ->
+                        log.info("MatchService: User: {}, is close match: {} for bets at: {}", email, matchId, DateTimeConverter.formatInstantNow()))
                 .then(repository.findById(matchId)
                         .switchIfEmpty(Mono.error(new NotFoundException(ErrorMessages.MATCH_NOT_OPEN_TO_BETS.getMessage())))
                         .flatMap(match -> {
@@ -108,7 +113,6 @@ public class MatchService {
                         .then());
     }
 
-
     public Mono<MatchResponseDTO> buildMatchResponseDTO(Match match) {
         return Mono.zip(
                 teamService.findById(match.getHomeTeamId()),
@@ -116,6 +120,8 @@ public class MatchService {
                 championshipService.findById(match.getChampionshipId())
         ).map(matchResponse -> mapper.toDto(match, matchResponse.getT1().getName(), matchResponse.getT2().getName(), matchResponse.getT3().getName()));
     }
+
+//    -----
 
     private Mono<MatchResponseDTO> fetchTeamsAndCreateMatch(MatchRequestDTO dto) {
         return Mono.zip(
@@ -182,7 +188,6 @@ public class MatchService {
                 })
                 .then();
     }
-
 
     private Mono<MatchRequestDTO> validateTeamsAreDifferent(MatchRequestDTO dto) {
         if (dto.getHomeTeamId().equals(dto.getVisitingTeamId())) {

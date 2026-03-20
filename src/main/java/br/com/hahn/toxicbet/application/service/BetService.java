@@ -13,10 +13,6 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-/**
- * Service responsible for bet operations.
- * Delegates bet processing to BetProcessorService for sequential processing per match.
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -26,14 +22,6 @@ public class BetService {
     private final BetRepository betRepository;
     private final MatchService matchService;
 
-    /**
-     * Places a bet by enqueueing it for sequential processing.
-     * Bets for the same match are processed sequentially to avoid race conditions.
-     *
-     * @param betRequestDTOMono The bet request
-     * @param userEmail The user email
-     * @return Mono with the bet response
-     */
     public Mono<BetResponseDTO> placeBet(Mono<BetRequestDTO> betRequestDTOMono, String userEmail) {
         return betRequestDTOMono
                 .flatMap(dto -> isMatchOpenToBet(dto.getMatchId()).thenReturn(dto))
@@ -53,10 +41,5 @@ public class BetService {
                     }
                     return Mono.empty();
                 });
-    }
-
-    public Flux<Bet> findByMatchId(Long matchId){
-        log.info("BetService: Find bets by match id: {}", matchId);
-        return betRepository.findByMatchId(matchId);
     }
 }

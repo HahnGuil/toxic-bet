@@ -25,13 +25,6 @@ public class BetProcessorService {
     private final BetExecutorService betExecutorService;
     private final BetProcessingMetrics metrics;
 
-    /**
-     * Enqueues a bet for processing. Bets for the same match are processed sequentially.
-     *
-     * @param betRequestDTO The bet request
-     * @param userEmail The user email
-     * @return Mono with the bet response
-     */
     public Mono<BetResponseDTO> enqueueBet(BetRequestDTO betRequestDTO, String userEmail) {
         Long matchId = betRequestDTO.getMatchId();
 

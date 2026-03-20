@@ -16,18 +16,10 @@ public class MatchEventPublisherService {
         this.oddsSink = Sinks.many().multicast().onBackpressureBuffer();
     }
 
-    public void publishMatchCreated(MatchResponseDTO matchResponseDTO){
-        matchSink.tryEmitNext(matchResponseDTO);
-    }
-
     public void publishOddsUpdate(MatchResponseDTO matchResponseDTO){
         oddsSink.tryEmitNext(matchResponseDTO);
     }
 
-    /**
-     * Returns a merged stream of both match creation and odds updates.
-     * This stream emits events whenever a match is created OR odds are updated.
-     */
     public Flux<MatchResponseDTO> getAllEventsStream() {
         return Flux.merge(matchSink.asFlux(), oddsSink.asFlux());
     }

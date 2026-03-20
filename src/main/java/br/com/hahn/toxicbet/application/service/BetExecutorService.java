@@ -34,13 +34,6 @@ public class BetExecutorService {
     private final TransactionalOperator transactionalOperator;
     private final BetProcessingMetrics metrics;
 
-    /**
-     * Processes a bet request from the queue.
-     * This method is called sequentially for each match.
-     *
-     * @param betRequest The bet request to process
-     * @return Mono that completes when the bet is processed
-     */
     public Mono<Void> processBet(BetProcessorService.BetRequest betRequest) {
         Long matchId = betRequest.betRequestDTO().getMatchId();
         BetProcessingMetrics.ProcessingSample sample = metrics.recordProcessingStarted(matchId);
