@@ -6,7 +6,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
 @Service
-public class MatchEventPublisherService {
+public class MatchEventPublisherService{
 
     private final Sinks.Many<MatchResponseDTO> matchSink;
     private final Sinks.Many<MatchResponseDTO> oddsSink;

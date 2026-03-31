@@ -14,7 +14,7 @@ spring:
     enabled: true
 
   kafka:
-    bootstrap-servers: kafka:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
     consumer:
       group-id: update-user-data
       auto-offset-reset: earliest
@@ -23,7 +23,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: http://auth-server:2310/auth-server/public-key/jwks
+          jwk-set-uri: ${AUTH_SERVER_JWK_SET_URI:http://auth-server:2310/auth-server/public-key/jwks}
           jwk-cache-lifespan: 3600000
           connect-timeout: 30000
           read-timeout: 30000

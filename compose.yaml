@@ -1,28 +1,34 @@
 services:
-  postgres-dev:
-    image: postgres:16
-    container_name: toxic-bet-dev
-    restart: always
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: toxic-bet-api
+    restart: unless-stopped
     env_file:
       - .env
     environment:
-      POSTGRES_USER: ${POSTGRES_DEV_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_DEV_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DEV_DB}
+      SPRING_PROFILES_ACTIVE: docker
+      POSTGRES_DOCKER_HOST: postgres
+      POSTGRES_DOCKER_PORT: 5432
+      POSTGRES_DOCKER_USER: ${POSTGRES_DOCKER_USER}
+      POSTGRES_DOCKER_PASSWORD: ${POSTGRES_DOCKER_PASSWORD}
+      POSTGRES_DOCKER_DB: ${POSTGRES_DOCKER_DB}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      AUTH_SERVER_JWK_SET_URI: ${AUTH_SERVER_JWK_SET_URI:-http://auth-server:2310/auth-server/public-key/jwks}
     ports:
-      - "5435:5432"
-    volumes:
-      - postgres_dev_data:/var/lib/postgresql/data
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_DEV_USER} -p 5432 -d ${POSTGRES_DEV_USER}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - "20000:20000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - toxic-bet-net
+      - shared-services
 
-  postgres-docker:
+  postgres:
     image: postgres:16
-    container_name: toxic-bet
-    restart: always
+    container_name: toxic-bet-db
+    restart: unless-stopped
     env_file:
       - .env
     environment:
@@ -32,18 +38,30 @@ services:
     ports:
       - "5440:5432"
     volumes:
-      - postgres_docker_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_DOCKER_USER} -p 5432 -d ${POSTGRES_DOCKER_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_DOCKER_USER} -d ${POSTGRES_DOCKER_DB} -p 5432"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - toxic-bet-net
 
   redis:
-    image: redis:latest
+    image: redis:7-alpine
+    container_name: toxic-bet-redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
+    networks:
+      - toxic-bet-net
 
 volumes:
-  postgres_dev_data:
-  postgres_docker_data:
+  postgres_data:
+
+networks:
+  toxic-bet-net:
+    name: toxic-bet-net
+  shared-services:
+    external: true
+    name: ${SHARED_SERVICES_NETWORK:-shared-services}

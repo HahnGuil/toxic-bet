@@ -21,6 +21,7 @@ public class MatchController extends AbstractController implements MatchApi {
 
     private final MatchService matchService;
     private final MatchEventPublisherService matchEventPublisherService;
+    private static final Long STREAM_DELAY_DURATION = 1L;
 
     public MatchController(JwtService jwtService, MatchService matchService, MatchEventPublisherService matchEventPublisherService) {
         super(jwtService);
@@ -38,9 +39,19 @@ public class MatchController extends AbstractController implements MatchApi {
     @GetMapping(value = "/match", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<MatchResponseDTO> streamAllMatches() {
         Flux<MatchResponseDTO> existingMatches = matchService.findAll();
-        Flux<MatchResponseDTO> eventStream = matchEventPublisherService.getAllEventsStream();
+        Flux<MatchResponseDTO> eventStream = getEventStream();
         return Flux.merge(existingMatches, eventStream)
-                .delayElements(Duration.ofSeconds(1));
+                .delayElements(Duration.ofSeconds(STREAM_DELAY_DURATION));
+    }
+
+    @GetMapping(value = "/match/find-open", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<MatchResponseDTO> streamOpenBettingMatches(){
+       Flux<MatchResponseDTO> openMatches = matchService.findMatchesOpenToBets();
+
+       Flux<MatchResponseDTO> openEventsOnly = getEventStream()
+               .filter(matchResponseDTO -> MatchResponseDTO.ResultEnum.OPEN_FOR_BETTING.equals(matchResponseDTO.getResult()));
+
+       return Flux.merge(openMatches, openEventsOnly).delayElements(Duration.ofSeconds(STREAM_DELAY_DURATION));
     }
 
     @Override
@@ -62,5 +73,9 @@ public class MatchController extends AbstractController implements MatchApi {
         return extractUserEmailFromToken(exchange)
                 .flatMap(userEmail -> matchService.openMatch(matchId, userEmail))
                 .then(Mono.just(ResponseEntity.status(HttpStatus.NO_CONTENT).build()));
+    }
+
+    private Flux<MatchResponseDTO> getEventStream(){
+        return matchEventPublisherService.getAllEventsStream();
     }
 }

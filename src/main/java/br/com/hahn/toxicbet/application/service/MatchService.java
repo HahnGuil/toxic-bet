@@ -46,11 +46,30 @@ public class MatchService {
         return repository.findAll().flatMap(this::buildMatchResponseDTO);
     }
 
-    public Mono<Long> updateMatchesToInProgress(){
+    public Flux<MatchResponseDTO> findMatchesOpenToBets(){
+        return repository.findAll()
+                .filter(match -> match.getResult() == Result.OPEN_FOR_BETTING)
+                .flatMap(this::buildMatchResponseDTO);
+    }
+
+    public Mono<Long> autoOpenMatchToBets(){
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime limit = now.plusHours(3);
+
         return repository.findAll()
                 .filter(match -> match.getResult() == Result.NOT_STARTED)
+                .filter(match -> !match.getMatchTime().isBefore(now) && !match.getMatchTime().isAfter(limit))
+                .flatMap(match -> {
+                    match.setResult(Result.OPEN_FOR_BETTING);
+                    return repository.save(match);
+                }).count();
+    }
+
+    public Mono<Long> updateMatchesToInProgress(){
+        return repository.findAll()
+                .filter(match -> match.getResult() == Result.OPEN_FOR_BETTING)
                 .filter(match -> match.getMatchTime().isBefore(LocalDateTime.now()))
-                .doOnSubscribe(subscription -> log.info("MatchService: Update matches result to Not Started"))
+                .doOnSubscribe(subscription -> log.info("MatchService: Update matches result to In Progress"))
                 .flatMap(match -> {
                     match.setResult(Result.IN_PROGRESS);
                     match.setOddsHomeTeam(BaseValues.ODD_BASE_VALUE.getDoubleValue());

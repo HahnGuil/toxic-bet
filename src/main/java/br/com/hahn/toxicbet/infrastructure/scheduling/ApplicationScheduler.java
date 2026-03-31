@@ -11,7 +11,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ApplicationScheduler {
 
+    public static final String ERROR_SCHEDULER = "ApplicationScheduler: Error to updating result matches";
     private final MatchService matchService;
+
 
     @Scheduled(cron = "0 * * * * *")
     public void updateMatchesToInProgress(){
@@ -19,6 +21,15 @@ public class ApplicationScheduler {
         matchService.updateMatchesToInProgress()
                 .subscribe(
                         count -> log.info("ApplicationScheduler: Updating: {} matches to IN_PROCESS", count),
-                        error -> log.error("ApplicationScheduler: Error to updating result matches: {}", error.getMessage()));
+                        error -> log.error(ERROR_SCHEDULER + ": {}", error.getMessage()));
+    }
+
+    @Scheduled(cron = "0 * * * * *")
+    public void updateMatchesToOpenToBetting(){
+        log.info("ApplicationScheduler: Starting updating matches to OPEN_TO_BETTING");
+        matchService.autoOpenMatchToBets()
+                .subscribe(
+                        count -> log.info("ApplicationScheduler: Updating: {} matches to OPENT_TO_BETTING", count),
+                        error -> log.error(ERROR_SCHEDULER + ": {}", error.getMessage()));
     }
 }

@@ -418,7 +418,55 @@ paths:
                   value:
                     timestamp: "2024-12-08T19:30:00Z"
                     message: "The reported match was not found."
-
+  /match/find-open:
+    get:
+      summary: Reactive stream of matches (SSE)
+      description: Returns existing matches with OPEN_TO_BETTING result.
+      operationId: streamOpenBettingMatches
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: Stream of matches with result OPEN_TO_BETTING (text/event-stream)
+          content:
+            text/event-stream:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MatchResponseDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                missingToken:
+                  summary: Missing authentication token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Authentication token is required."
+                invalidToken:
+                  summary: Invalid or malformed token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Invalid authentication token."
+                expiredToken:
+                  summary: Expired token
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Authentication token has expired."
+                authenticationFailed:
+                  summary: Authentication server connection failed
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Unable to authenticate. Please try again later."
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
   /match/open:
     patch:
       tags:
