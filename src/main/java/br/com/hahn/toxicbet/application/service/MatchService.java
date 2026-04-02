@@ -72,11 +72,10 @@ public class MatchService {
                 .doOnSubscribe(subscription -> log.info("MatchService: Update matches result to In Progress"))
                 .flatMap(match -> {
                     match.setResult(Result.IN_PROGRESS);
-                    match.setOddsHomeTeam(BaseValues.ODD_BASE_VALUE.getDoubleValue());
-                    match.setOddsVisitingTeam(BaseValues.ODD_BASE_VALUE.getDoubleValue());
-                    match.setOddsDraw(BaseValues.ODD_BASE_VALUE.getDoubleValue());
+                    log.info("MatchService: Update match: {}, with MatchTime: {}, to IN_PROGRESS at: {}", match.getId(), match.getMatchTime(), DateTimeConverter.formatInstantNow());
                     return repository.save(match);
-                }).count();
+                })
+                .count();
     }
 
     public Mono<Match> findById(Long id){
