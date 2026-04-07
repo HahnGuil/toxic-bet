@@ -138,7 +138,7 @@ POSTGRES_DOCKER_DB=toxic-bet
 > **Importante:** além do banco, a aplicação também depende de serviços externos não definidos por `.env.example`:
 >
 > - **Kafka** em `localhost:9093` no perfil `dev` e `kafka:9092` no perfil `docker`
-> - **Auth-Server** com JWKs em `http://localhost:2300/auth-server/public-key/jwks` no perfil `dev` e `http://auth-server:2310/auth-server/public-key/jwks` no perfil `docker`
+> - **Auth-Server** com JWKs em `http://localhost:2300/auth-server/public-key/jwks` no perfil `dev` e `http://auth-server:2300/auth-server/public-key/jwks` no perfil `docker`
 
 ---
 

@@ -23,7 +23,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: ${AUTH_SERVER_JWK_SET_URI:http://auth-server:2310/auth-server/public-key/jwks}
+          jwk-set-uri: ${AUTH_SERVER_JWK_SET_URI:http://auth-server:2300/auth-server/public-key/jwks}
           jwk-cache-lifespan: 3600000
           connect-timeout: 30000
           read-timeout: 30000
