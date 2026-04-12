@@ -1,10 +1,12 @@
 package br.com.hahn.toxicbet.application.service;
 
 import br.com.hahn.toxicbet.application.mapper.UserMapper;
+import br.com.hahn.toxicbet.domain.exception.NotAuthorizedException;
 import br.com.hahn.toxicbet.domain.exception.NotFoundException;
 import br.com.hahn.toxicbet.domain.model.Users;
 import br.com.hahn.toxicbet.domain.model.dto.UserDTO;
 import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
+import br.com.hahn.toxicbet.domain.model.enums.Role;
 import br.com.hahn.toxicbet.domain.repository.BetRepository;
 import br.com.hahn.toxicbet.domain.repository.UserRepository;
 import br.com.hahn.toxicbet.model.UserRequestDTO;
@@ -65,6 +67,17 @@ public class UserService {
             return userRepository.findByEmail(userDTO.userEmail()).map(userMapper::toDTO);
         }
         return userRepository.findById(userDTO.userId()).map(userMapper::toDTO);
+    }
+
+    public Mono<Void> isUserAdmin(String email){
+        return userRepository.findByEmail(email)
+                .flatMap(user -> {
+                    if (!Role.ADMIN.equals(user.getRole())) {
+                        log.error("MatchService: UNAUTHORIZED: User {} does not have ADMIN role at: {}", email, DateTimeConverter.formatInstantNow());
+                        return Mono.error(new NotAuthorizedException(ErrorMessages.FORBIDDEN_OPERATION.getMessage()));
+                    }
+                    return Mono.empty();
+                }).then();
     }
 
     public Mono<Boolean> existsByEmail(String email){

@@ -2,6 +2,9 @@ package br.com.hahn.toxicbet.domain.repository;
 
 import br.com.hahn.toxicbet.domain.model.Team;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import reactor.core.publisher.Mono;
 
 public interface TeamRepository extends ReactiveCrudRepository<Team, Long> {
+
+    Mono<Team> findTeamByName(String name);
 }

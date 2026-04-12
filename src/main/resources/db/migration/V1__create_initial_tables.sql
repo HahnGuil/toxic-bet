@@ -14,16 +14,9 @@ CREATE TABLE IF NOT EXISTS teams (
 
 CREATE TABLE IF NOT EXISTS championship(
                                            id BIGSERIAL PRIMARY KEY,
-                                           name VARCHAR(255) NOT NULL
-);
+                                           name VARCHAR(255) NOT NULL,
+                                            teams_id TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]
 
-CREATE TABLE IF NOT EXISTS championship_teams(
-                                                 id BIGSERIAL PRIMARY KEY,
-                                                 championship_id BIGINT NOT NULL,
-                                                 team_id BIGINT NOT NULL,
-                                                 CONSTRAINT fk_championship_teams_championship FOREIGN KEY (championship_id) REFERENCES championship(id),
-                                                 CONSTRAINT fk_championship_teams_team FOREIGN KEY (team_id) REFERENCES teams(id),
-                                                 CONSTRAINT uq_championship_team UNIQUE (championship_id, team_id)
 );
 
 CREATE TABLE IF NOT EXISTS match (

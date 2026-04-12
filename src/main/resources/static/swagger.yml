@@ -19,6 +19,8 @@ tags:
     description: Operations for beatings pool
   - name: standings
     description: Operations for standings
+  - name: championship
+    description: Operations for championship
 
 paths:
   /users/existsByEmail/:
@@ -766,7 +768,243 @@ paths:
                   value:
                     timestamp: "2024-12-08T19:30:00Z"
                     message: "User not found, please register."
+  /championship:
+    post:
+      tags:
+        - championship
+      summary: Create a championship
+      description: Allows to register a championship
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChampionshipRequestDTO'
+      responses:
+        '201':
+          description: Championship successfully registered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChampionshipDTO'
+        '400':
+          description: Invalid Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                missingToken:
+                  summary: The user does not have the privileges to perform the operation.
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Only administrators can perform this operation."
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                matchNotFound:
+                  summary: Championship already exist
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "The Championship has already been registered."
+    get:
+      tags:
+        - championship
+      summary: Find all championships
+      description: Returns one or more championships
+      operationId: getFindAll
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: Championships found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChampionshipResponseDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+    patch:
+      tags:
+        - championship
+      summary: Find all championships
+      description: Add user to championship
+      operationId: patchAddUserToChampionship
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: championshipId
+          in: query
+          required: true
+          description: ID of Championship to add the team
+          schema:
+            type: integer
+            format: int64
+        - name: teamId
+          in: query
+          required: true
+          description: ID of team to add to championship
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Team Add To Championship
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponseDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '404':
+          description: Championship pool not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+  /champioship/find-by-championship:
+    get:
+      tags:
+        - championship
+      summary: FSearch for the teams in the championship.
+      description: Operation that searches for and updates the teams in the championship.
+      operationId: getTeamByChampioship
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: championshipId
+          in: query
+          required: true
+          description: ID of the championship to find teams
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Championships found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChampionshipResponseDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
 
+
+  /team:
+    post:
+      tags:
+        - team
+      summary: Create one or more teams
+      description: Allows you to register one or more teams.
+      operationId: postCreateTeams
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/TeamRequestDTO'
+              example:
+                oneTeam:
+                  summary: One team register
+                  value:
+                    - name: "Liverpool"
+                manyTeams:
+                  summary: Many teams register
+                  value:
+                    - name: "Liverpool"
+                    - name: "West Ham"
+                    - name: "Gremio"
+      responses:
+        '201':
+          description: Teams successfully registered.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeamResponseDTO'
+        '400':
+          description: Invalid Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                missingToken:
+                  summary: The user does not have the privileges to perform the operation.
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "Only administrators can perform this operation."
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+              examples:
+                matchNotFound:
+                  summary: Team already exist
+                  value:
+                    timestamp: "2024-12-08T19:30:00Z"
+                    message: "The team has already been registered."
 components:
   schemas:
     ErrorResponseDTO:
@@ -1002,6 +1240,49 @@ components:
           type: string
           description: Unique code of betting pool
           example: "A23BC45DE"
+    TeamRequestDTO:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: "Manchester United"
+    TeamResponseDTO:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Liverpool"
+    ChampionshipRequestDTO:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "UEFA Champions League"
+    ChampionshipDTO:
+      type: object
+      required:
+        - name
+      properties:
+        idChampionship:
+          type: integer
+          format: int64
+          description: ID of championship
+          example: 1
+        name:
+          type: string
+          example: "UEFA Champions League"
+    ChampionshipResponseDTO:
+      type: array
+      minItems: 1
+      items:
+        $ref: '#/components/schemas/ChampionshipDTO'
+
   securitySchemes:
     bearerAuth:
       type: http

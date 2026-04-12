@@ -35,7 +35,7 @@ public class MatchService {
 
     public Mono<MatchResponseDTO> createMatchDto(Mono<MatchRequestDTO> matchRequestDTOMono, String userEmail) {
         return matchRequestDTOMono
-                .flatMap(dto -> isUserAdmin(userEmail).thenReturn(dto))
+                .flatMap(dto -> userService.isUserAdmin(userEmail).thenReturn(dto))
                 .flatMap(this::isMatchTimeValid)
                 .flatMap(this::validatesTeamNotPlayingAtTheScheduledTime)
                 .flatMap(this::validateTeamsAreDifferent)
@@ -87,7 +87,7 @@ public class MatchService {
     }
 
     public Mono<Void> closeMatch(Long matchId, String result, String email){
-        return isUserAdmin(email)
+        return userService.isUserAdmin(email)
                 .doOnSubscribe(subscription ->
                         log.info("MatchService: User: {}, is close match: {} with result: {} at: {}", email, matchId, result, DateTimeConverter.formatInstantNow()))
                 .then(repository.findById(matchId)
@@ -106,7 +106,7 @@ public class MatchService {
 
 
     public Mono<Void> openMatch(Long matchId, String email) {
-        return isUserAdmin(email)
+        return userService.isUserAdmin(email)
                 .doOnSubscribe(subscription ->
                         log.info("MatchService: User: {}, is open match: {} for bets at: {}", email, matchId, DateTimeConverter.formatInstantNow()))
                 .then(repository.findById(matchId)
@@ -119,7 +119,7 @@ public class MatchService {
     }
 
     public Mono<Void> closeMatchForBet(Long matchId, String email) {
-        return isUserAdmin(email)
+        return userService.isUserAdmin(email)
                 .doOnSubscribe(subscription ->
                         log.info("MatchService: User: {}, is close match: {} for bets at: {}", email, matchId, DateTimeConverter.formatInstantNow()))
                 .then(repository.findById(matchId)
@@ -192,19 +192,6 @@ public class MatchService {
             return Mono.error(new BusinessException(ErrorMessages.INVALID_MATCH_TIME.getMessage()));
         }
         return Mono.just(dto);
-    }
-
-    private Mono<Void> isUserAdmin(String email) {
-        return userService.findUserByEmail(email)
-                .flatMap(userService::findById)
-                .flatMap(user -> {
-                    if (!Role.ADMIN.equals(user.getRole())) {
-                        log.error("MatchService: UNAUTHORIZED: User {} does not have ADMIN role at: {}", email, DateTimeConverter.formatInstantNow());
-                        return Mono.error(new NotAuthorizedException(ErrorMessages.FORBIDDEN_OPERATION.getMessage()));
-                    }
-                    return Mono.empty();
-                })
-                .then();
     }
 
     private Mono<MatchRequestDTO> validateTeamsAreDifferent(MatchRequestDTO dto) {

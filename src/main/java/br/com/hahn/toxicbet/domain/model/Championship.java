@@ -7,6 +7,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+import java.util.List;
+
 @Data
 @Table("championship")
 @RequiredArgsConstructor
@@ -18,4 +20,7 @@ public class Championship {
     @NotNull
     @Column("name")
     private String name;
+
+    @Column("teams")
+    private List<String> teams;
 }
