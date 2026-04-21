@@ -857,7 +857,7 @@ paths:
         - championship
       summary: Find all championships
       description: Add user to championship
-      operationId: patchAddUserToChampionship
+      operationId: patchAddTeamToChampionship
       security:
         - bearerAuth: [ ]
       parameters:

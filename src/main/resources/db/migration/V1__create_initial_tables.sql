@@ -73,8 +73,6 @@ CREATE INDEX IF NOT EXISTS idx_match_time ON match(match_time);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_teams_name ON teams(name);
 CREATE INDEX IF NOT EXISTS idx_championship_name ON championship(name);
-CREATE INDEX IF NOT EXISTS idx_championship_teams_team_id ON championship_teams(team_id);
-CREATE INDEX IF NOT EXISTS idx_championship_teams_championship_id ON championship_teams(championship_id);
 CREATE INDEX IF NOT EXISTS idx_betting_pool_owner_id ON betting_pool(betting_pool_owner_id);
 CREATE INDEX IF NOT EXISTS idx_betting_pool_user_ids ON betting_pool USING GIN(user_ids);
 CREATE INDEX IF NOT EXISTS idx_bet_user_match ON bet(user_id, match_id);

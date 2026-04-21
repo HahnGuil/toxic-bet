@@ -43,10 +43,9 @@ public class ChampionshipController extends AbstractController implements Champi
                         .name(team.getName()));
         return Mono.just(ResponseEntity.status(HttpStatus.OK).body(teams));
     }
-
-
+    
     @Override
-    public Mono<ResponseEntity<SuccessResponseDTO>> patchAddUserToChampionship(Long championshipId, Long teamId, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<SuccessResponseDTO>> patchAddTeamToChampionship(Long championshipId, Long teamId, ServerWebExchange exchange) {
         return extractUserEmailFromToken(exchange)
                 .flatMap(userEmail -> championshipService.addTeamToChampionship(userEmail, championshipId, teamId))
                 .map(response -> ResponseEntity.status(HttpStatus.OK).body(response));

@@ -21,6 +21,6 @@ public class Championship {
     @Column("name")
     private String name;
 
-    @Column("teams")
+    @Column("teams_id")
     private List<String> teams;
 }
