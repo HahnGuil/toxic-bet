@@ -1,4 +1,4 @@
-package br.com.hahn.toxicbet.infrastructure.config;
+package br.com.hahn.toxicbet.infrastructure.config.kafka;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -27,7 +27,6 @@ public class KafkaProducerConfig {
         configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         return new DefaultKafkaProducerFactory<>(configProps);
     }
-
 
     @Bean
     public KafkaTemplate<String, Object> kafkaTemplate() {

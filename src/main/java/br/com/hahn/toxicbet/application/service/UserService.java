@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import javax.print.DocFlavor;
 import java.util.UUID;
 
 @Service
@@ -62,6 +63,14 @@ public class UserService {
                 }));
     }
 
+    public Mono<Users> findByEmail(String email){
+        return userRepository.findByEmail(email)
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.info("UserService: NOT_FOUND: Not found user with email: {}.  Throw Not Found Exception at: {}", email, DateTimeConverter.formatInstantNow());
+                    return Mono.error(new NotFoundException(ErrorMessages.USER_NOT_FOUND.getMessage()));
+                }));
+    }
+
     public Mono<UserResponseDTO> getUser(UserDTO userDTO){
         if (userDTO.userEmail() != null){
             return userRepository.findByEmail(userDTO.userEmail()).map(userMapper::toDTO);
@@ -77,6 +86,14 @@ public class UserService {
                         return Mono.error(new NotAuthorizedException(ErrorMessages.FORBIDDEN_OPERATION.getMessage()));
                     }
                     return Mono.empty();
+                }).then();
+    }
+
+    public Mono<Void> updateUseradmin(String email){
+        return findByEmail(email)
+                .flatMap(users -> {
+                    users.setRole(Role.ADMIN);
+                    return userRepository.save(users);
                 }).then();
     }
 
