@@ -11,10 +11,9 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class KafkaProducerService {
 
-    private final KafkaTemplate<String, UserSyncEvent> kafkaUserTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    public void sendUserSyncEvent(UserSyncEvent userSyncEvent){
-        log.info("KafkaProducerService: Send topic to kafka, user id: {}", userSyncEvent.getUuid());
-        kafkaUserTemplate.send("sync-application", userSyncEvent.getUuid(), userSyncEvent);
+    public void sendUserSyncEvent(UserSyncEvent event) {
+        kafkaTemplate.send("sync-application", event.getUuid(), event);
     }
 }

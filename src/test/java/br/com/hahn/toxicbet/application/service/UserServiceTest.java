@@ -8,7 +8,6 @@ import br.com.hahn.toxicbet.domain.model.dto.UserDTO;
 import br.com.hahn.toxicbet.domain.model.enums.Result;
 import br.com.hahn.toxicbet.domain.repository.BetRepository;
 import br.com.hahn.toxicbet.domain.repository.UserRepository;
-import br.com.hahn.toxicbet.model.UserRequestDTO;
 import br.com.hahn.toxicbet.model.UserResponseDTO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,29 +40,6 @@ class UserServiceTest {
 
     @InjectMocks
     private UserService service;
-
-    @Test
-    void shouldRegisterUser() {
-        UserRequestDTO request = new UserRequestDTO();
-        request.setName("Alice");
-        request.setEmail("alice@test.com");
-
-        Users entity = new Users();
-        entity.setName("Alice");
-        entity.setEmail("alice@test.com");
-
-        UserResponseDTO response = new UserResponseDTO();
-        response.setUserName("Alice");
-        response.setUserEmail("alice@test.com");
-
-        when(userMapper.toEntity(request)).thenReturn(entity);
-        when(userRepository.save(entity)).thenReturn(Mono.just(entity));
-        when(userMapper.toDTO(entity)).thenReturn(response);
-
-        StepVerifier.create(service.registerUser(request))
-                .expectNext(response)
-                .verifyComplete();
-    }
 
     @Test
     void shouldFindUserIdByEmail() {

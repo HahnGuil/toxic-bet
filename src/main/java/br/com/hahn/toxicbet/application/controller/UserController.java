@@ -6,7 +6,6 @@ import br.com.hahn.toxicbet.domain.model.dto.UserDTO;
 import br.com.hahn.toxicbet.infrastructure.service.JwtService;
 import br.com.hahn.toxicbet.model.UserRequestDTO;
 import br.com.hahn.toxicbet.model.UserResponseDTO;
-import br.com.hahn.toxicbet.util.DateTimeConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,14 +26,9 @@ public class UserController extends AbstractController implements UsersApi {
         this.userService = userService;
     }
 
-    public Mono<ResponseEntity<UserResponseDTO>> postRegisterUser(Mono<UserRequestDTO> userRequestDTO, ServerWebExchange exchange) {
-        return userRequestDTO
-                .flatMap(req ->
-                        DateTimeConverter.formatInstantNowReactive()
-                                .doOnNext(ts -> log.info("UserController: Starting user registration for {} at: {}", req.getEmail(), ts))
-                                .then(updateOAuthUserApplication(req.getEmail()).then(userService.registerUser(req)))
-                )
-                .map(response -> ResponseEntity.status(HttpStatus.CREATED).body(response));
+    public Mono<ResponseEntity<Void>> postRegisterUser(Mono<UserRequestDTO> userRequestDTO, ServerWebExchange exchange) {
+        return userRequestDTO.flatMap(userService::registerUser)
+                .then(Mono.just(ResponseEntity.status(HttpStatus.CREATED).build()));
     }
 
     @Override

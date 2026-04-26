@@ -28,10 +28,10 @@ public class UserService {
     private final UserMapper userMapper;
     private final BetRepository betRepository;
 
-
-    public Mono<UserResponseDTO> registerUser(UserRequestDTO userRequestDTO) {
-            return userRepository.save(userMapper.toEntity(userRequestDTO))
-                    .map(userMapper::toDTO);
+    public Mono<Void> registerUser(UserRequestDTO userRequestDTO) {
+        return userRepository.save(userMapper.toEntity(userRequestDTO))
+                .doOnNext(savedUser -> log.info("User registered successfully with email: {}", savedUser.getEmail()))
+                .then();
     }
 
     public Mono<UUID> findUserByEmail(String email){
@@ -83,5 +83,4 @@ public class UserService {
     public Mono<Boolean> existsByEmail(String email){
         return userRepository.existsByEmail(email);
     }
-
 }
