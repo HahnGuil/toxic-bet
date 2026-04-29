@@ -17,7 +17,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: ${AUTH_SERVER_JWK_SET_URI:http://auth-server:2310/auth-server/public-key/jwks}
+          jwk-set-uri: ${AUTH_SERVER_JWK_SET_URI:http://ms-auth-server:2300/auth-server/public-key/jwks}
           jwk-cache-lifespan: 3600000
           connect-timeout: 30000
           read-timeout: 30000
@@ -37,5 +37,5 @@ logging:
 
 integration:
   auth:
-    base-url: http://localhost:2300
-    application-public-id: ""
+    base-url: ${AUTH_SERVER_BASE_URL:http://ms-auth-server:2300}
+    application-public-id: "88a2c306-25df-442d-9ba1-cb3565edf872"
