@@ -3,27 +3,21 @@ spring:
     name: toxic-bet
 
   r2dbc:
-    url: r2dbc:postgresql://${POSTGRES_DOCKER_HOST:postgres-docker}:${POSTGRES_DOCKER_PORT:5432}/${POSTGRES_DOCKER_DB}
+    url: r2dbc:postgresql://${POSTGRES_DOCKER_HOST:postgres}:${POSTGRES_DOCKER_PORT:5432}/${POSTGRES_DOCKER_DB}
     username: ${POSTGRES_DOCKER_USER}
     password: ${POSTGRES_DOCKER_PASSWORD}
 
   flyway:
-    url: jdbc:postgresql://${POSTGRES_DOCKER_HOST:postgres-docker}:${POSTGRES_DOCKER_PORT:5432}/${POSTGRES_DOCKER_DB}
+    url: jdbc:postgresql://${POSTGRES_DOCKER_HOST:postgres}:${POSTGRES_DOCKER_PORT:5432}/${POSTGRES_DOCKER_DB}
     user: ${POSTGRES_DOCKER_USER}
     password: ${POSTGRES_DOCKER_PASSWORD}
     enabled: true
-
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
-    consumer:
-      group-id: update-user-data
-      auto-offset-reset: earliest
 
   security:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: https://auth.toxicbet.com.br/auth-server/public-key/jwks
+          jwk-set-uri: ${AUTH_SERVER_JWK_SET_URI:http://auth-server:2310/auth-server/public-key/jwks}
           jwk-cache-lifespan: 3600000
           connect-timeout: 30000
           read-timeout: 30000
@@ -38,5 +32,5 @@ server:
 
 logging:
   level:
-    org.springframework. security: INFO
+    org.springframework.security: INFO
     br.com.hahn.toxicbet: INFO

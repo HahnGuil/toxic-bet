@@ -2,10 +2,10 @@ package br.com.hahn.toxicbet.application.controller;
 
 import br.com.hahn.toxicbet.api.ChampionshipApi;
 import br.com.hahn.toxicbet.application.service.ChampionshipService;
-import br.com.hahn.toxicbet.infrastructure.service.JwtService;
 import br.com.hahn.toxicbet.model.ChampionshipDTO;
 import br.com.hahn.toxicbet.model.ChampionshipRequestDTO;
 import br.com.hahn.toxicbet.model.SuccessResponseDTO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,14 +14,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
+@RequiredArgsConstructor
 public class ChampionshipController extends AbstractController implements ChampionshipApi {
 
     private final ChampionshipService championshipService;
-
-    public ChampionshipController(JwtService jwtService, ChampionshipService championshipService) {
-        super(jwtService);
-        this.championshipService = championshipService;
-    }
 
     @Override
     public Mono<ResponseEntity<ChampionshipDTO>> championshipPost(Mono<ChampionshipRequestDTO> championshipRequestDTO, ServerWebExchange exchange) {

@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: toxic-bet-docker-db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_DOCKER_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_DOCKER_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DOCKER_DB}
+    ports:
+      - "5440:5432"
+    networks:
+      - toxic-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_DOCKER_USER} -d ${POSTGRES_DOCKER_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  toxic-bet-api:
+    build: .
+    container_name: toxic-bet-docker-api
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: aws
+      POSTGRES_DOCKER_HOST: postgres
+      POSTGRES_DOCKER_PORT: 5432
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      AUTH_SERVER_JWK_SET_URI: ${AUTH_SERVER_JWK_SET_URI:-http://auth-server:2310/auth-server/public-key/jwks}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "20000:20000"
+    networks:
+      - toxic-net
+      - shared-services
+
+networks:
+  toxic-net:
+    driver: bridge
+
+  shared-services:
+    external: true
+    name: ${SHARED_SERVICES_NETWORK:-shared-services}

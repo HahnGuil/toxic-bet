@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: toxic-bet
+
+  r2dbc:
+    url: r2dbc:postgresql://${POSTGRES_LOCAL_HOST:${POSTGRES_DEV_HOST:localhost}}:${POSTGRES_LOCAL_PORT:${POSTGRES_DEV_PORT:5435}}/${POSTGRES_LOCAL_DB:${POSTGRES_DEV_DB}}
+    username: ${POSTGRES_LOCAL_USER:${POSTGRES_DEV_USER}}
+    password: ${POSTGRES_LOCAL_PASSWORD:${POSTGRES_DEV_PASSWORD}}
+
+  flyway:
+    url: jdbc:postgresql://${POSTGRES_LOCAL_HOST:${POSTGRES_DEV_HOST:localhost}}:${POSTGRES_LOCAL_PORT:${POSTGRES_DEV_PORT:5435}}/${POSTGRES_LOCAL_DB:${POSTGRES_DEV_DB}}
+    user: ${POSTGRES_LOCAL_USER:${POSTGRES_DEV_USER}}
+    password: ${POSTGRES_LOCAL_PASSWORD:${POSTGRES_DEV_PASSWORD}}
+    enabled: true
+
+  sql:
+    init:
+      mode: always
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${AUTH_SERVER_LOCAL_JWK_SET_URI:${AUTH_SERVER_JWK_SET_URI:http://localhost:2310/auth-server/public-key/jwks}}
+          jwk-cache-lifespan: 3600000
+          connect-timeout: 30000
+          read-timeout: 30000
+
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=100,expireAfterWrite=1h
+
+server:
+  port: 10000
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    br.com.hahn.toxicbet: DEBUG
+

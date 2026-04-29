@@ -17,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import javax.print.DocFlavor;
 import java.util.UUID;
 
 @Service
@@ -86,14 +85,6 @@ public class UserService {
                         return Mono.error(new NotAuthorizedException(ErrorMessages.FORBIDDEN_OPERATION.getMessage()));
                     }
                     return Mono.empty();
-                }).then();
-    }
-
-    public Mono<Void> updateUseradmin(String email){
-        return findByEmail(email)
-                .flatMap(users -> {
-                    users.setRole(Role.ADMIN);
-                    return userRepository.save(users);
                 }).then();
     }
 

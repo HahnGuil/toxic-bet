@@ -1,7 +1,6 @@
 package br.com.hahn.toxicbet.domain.repository;
 
 import br.com.hahn.toxicbet.domain.model.BettingPool;
-import br.com.hahn.toxicbet.domain.model.Match;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;

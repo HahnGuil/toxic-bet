@@ -2,8 +2,8 @@ package br.com.hahn.toxicbet.application.controller;
 
 import br.com.hahn.toxicbet.api.BettingPoolApi;
 import br.com.hahn.toxicbet.application.service.BettingPoolService;
-import br.com.hahn.toxicbet.infrastructure.service.JwtService;
 import br.com.hahn.toxicbet.model.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -11,14 +11,10 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 @RestController
+@RequiredArgsConstructor
 public class BettingPoolController extends AbstractController implements BettingPoolApi {
 
     private final BettingPoolService bettingPoolService;
-
-    public BettingPoolController(JwtService jwtService, BettingPoolService bettingPoolService) {
-        super(jwtService);
-        this.bettingPoolService = bettingPoolService;
-    }
 
     @Override
     public Mono<ResponseEntity<BettingPoolResponseDTO>> getBettingPoolByUniqueCode(String bettingPoolKey, ServerWebExchange exchange) {

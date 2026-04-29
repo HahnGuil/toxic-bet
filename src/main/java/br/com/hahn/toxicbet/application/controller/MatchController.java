@@ -3,9 +3,10 @@ package br.com.hahn.toxicbet.application.controller;
 import br.com.hahn.toxicbet.api.MatchApi;
 import br.com.hahn.toxicbet.application.service.MatchEventPublisherService;
 import br.com.hahn.toxicbet.application.service.MatchService;
-import br.com.hahn.toxicbet.infrastructure.service.JwtService;
 import br.com.hahn.toxicbet.model.MatchRequestDTO;
 import br.com.hahn.toxicbet.model.MatchResponseDTO;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,17 +18,13 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 
 @RestController
+@RequiredArgsConstructor
+@Slf4j
 public class MatchController extends AbstractController implements MatchApi {
 
     private final MatchService matchService;
     private final MatchEventPublisherService matchEventPublisherService;
     private static final Long STREAM_DELAY_DURATION = 1L;
-
-    public MatchController(JwtService jwtService, MatchService matchService, MatchEventPublisherService matchEventPublisherService) {
-        super(jwtService);
-        this.matchService = matchService;
-        this.matchEventPublisherService = matchEventPublisherService;
-    }
 
     @Override
     public Mono<ResponseEntity<MatchResponseDTO>> postCreateMatch(Mono<MatchRequestDTO> matchRequestDTO, ServerWebExchange exchange) {

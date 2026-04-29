@@ -1,6 +1,5 @@
 package br.com.hahn.toxicbet.application.controller;
 
-import br.com.hahn.toxicbet.infrastructure.service.JwtService;
 import br.com.hahn.toxicbet.util.DateTimeConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,16 +10,6 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 @Slf4j
 public abstract class AbstractController {
-
-    protected final JwtService jwtService;
-
-    protected Mono<Void> updateOAuthUserApplication(String email) {
-        return jwtService.updateOAuthUserApplication()
-                .onErrorResume(e -> {
-                    log.error("AbstractController: Continuing despite OAuth check failure for user email: {} at: {}", email, DateTimeConverter.formatInstantNow());
-                    return Mono.empty();
-                });
-    }
 
     protected Mono<String> extractUserEmailFromToken(ServerWebExchange exchange) {
         return Mono.defer(() -> exchange.getPrincipal()
