@@ -28,7 +28,7 @@ services:
       POSTGRES_DOCKER_HOST: postgres
       POSTGRES_DOCKER_PORT: 5432
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
-      AUTH_SERVER_JWK_SET_URI: ${AUTH_SERVER_JWK_SET_URI:-http://auth-server:2310/auth-server/public-key/jwks}
+      AUTH_SERVER_JWK_SET_URI: https://auth.toxicbet.com.br/auth-server/public-key/jwks
     depends_on:
       postgres:
         condition: service_healthy
