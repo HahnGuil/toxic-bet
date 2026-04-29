@@ -13,6 +13,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.resources.ConnectionProvider;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 @Configuration
@@ -21,13 +22,6 @@ public class AuthWebClientConfig {
 
     @Bean("authWebClient")
     public WebClient authWebClient(AuthIntegrationProperties properties) {
-        DnsAddressResolverGroup dnsResolver = new DnsAddressResolverGroup(
-                new DnsNameResolverBuilder()
-                        .queryTimeoutMillis(5000)
-                        .negativeTtl(10)
-                        .ttl(60, 300)
-        );
-
         ConnectionProvider connectionProvider = ConnectionProvider.builder("auth-connection-pool")
                 .maxConnections(100)
                 .maxIdleTime(java.time.Duration.ofMinutes(30))
@@ -35,10 +29,10 @@ public class AuthWebClientConfig {
                 .build();
 
         HttpClient httpClient = HttpClient.create(connectionProvider)
-                .resolver(dnsResolver)
+                .wiretap(true)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 30000)
                 .option(ChannelOption.SO_KEEPALIVE, true)
-                .responseTimeout(java.time.Duration.ofSeconds(30))
+                .responseTimeout(Duration.ofSeconds(30))
                 .doOnConnected(conn ->
                         conn.addHandlerLast(new ReadTimeoutHandler(30, TimeUnit.SECONDS))
                                 .addHandlerLast(new WriteTimeoutHandler(30, TimeUnit.SECONDS))

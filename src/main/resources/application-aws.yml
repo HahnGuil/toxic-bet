@@ -32,6 +32,7 @@ server:
 
 logging:
   level:
+    reactor.netty.http.client: DEBUG
     org.springframework.security: INFO
     br.com.hahn.toxicbet: INFO
 
