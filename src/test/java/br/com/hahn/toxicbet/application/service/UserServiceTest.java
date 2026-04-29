@@ -38,8 +38,27 @@ class UserServiceTest {
     @Mock
     private BetRepository betRepository;
 
+    @Mock
+    private AuthServiceRegistrationService authServiceRegistrationService;
+
     @InjectMocks
     private UserService service;
+
+    @Test
+    void shouldRegisterUserAndCallAuthServiceRegistration() {
+        Users user = new Users();
+        user.setName("New User");
+        user.setEmail("new@user.com");
+
+        when(userMapper.toEntity("New User", "new@user.com")).thenReturn(user);
+        when(userRepository.save(user)).thenReturn(Mono.just(user));
+        when(authServiceRegistrationService.registerService("Bearer token")).thenReturn(Mono.empty());
+
+        StepVerifier.create(service.registerUser("New User", "new@user.com", "Bearer token"))
+                .verifyComplete();
+
+        verify(authServiceRegistrationService).registerService("Bearer token");
+    }
 
     @Test
     void shouldFindUserIdByEmail() {

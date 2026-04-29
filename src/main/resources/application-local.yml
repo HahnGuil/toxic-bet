@@ -40,3 +40,8 @@ logging:
     org.springframework.security.oauth2: DEBUG
     br.com.hahn.toxicbet: DEBUG
 
+integration:
+  auth:
+    base-url: http://localhost:2310
+    application-public-id: "f5b67d2b-df62-437a-a961-ee73e0cbc5fc"
+

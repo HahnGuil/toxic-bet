@@ -1,7 +1,6 @@
 package br.com.hahn.toxicbet.application.mapper;
 
 import br.com.hahn.toxicbet.domain.model.Users;
-import br.com.hahn.toxicbet.model.UserRequestDTO;
 import br.com.hahn.toxicbet.model.UserResponseDTO;
 import org.springframework.stereotype.Component;
 
@@ -10,11 +9,11 @@ public class UserMapper {
 
     private UserMapper(){}
 
-    public Users toEntity(UserRequestDTO dto) {
-        if (dto == null) return null;
+    public Users toEntity(String userName, String email) {
+        if (userName == null || userName.isBlank() || email == null || email.isBlank()) return null;
         Users user = new Users();
-        user.setName(dto.getName());
-        user.setEmail(dto.getEmail());
+        user.setName(userName);
+        user.setEmail(email);
         return user;
     }
 

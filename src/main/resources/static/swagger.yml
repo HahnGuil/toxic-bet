@@ -82,7 +82,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserRequestDTO'
+              type: string
+              description: User name to be registered
+              example: "John Coffee"
       responses:
         '204':
           description: Match Close for bet
@@ -1109,11 +1111,6 @@ components:
         - name
         - email
       properties:
-        email:
-          type: string
-          format: email
-          description: User email address to be registered
-          example: usuario@exemplo.com
         name:
           type: string
           description: User name to be registered

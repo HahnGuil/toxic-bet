@@ -34,3 +34,9 @@ logging:
   level:
     org.springframework.security: INFO
     br.com.hahn.toxicbet: INFO
+
+integration:
+  auth:
+    base-url: https://auth.toxicbet.com.br
+    application-public-id: ""
+

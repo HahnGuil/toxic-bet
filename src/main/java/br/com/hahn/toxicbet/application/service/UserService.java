@@ -9,7 +9,6 @@ import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
 import br.com.hahn.toxicbet.domain.model.enums.Role;
 import br.com.hahn.toxicbet.domain.repository.BetRepository;
 import br.com.hahn.toxicbet.domain.repository.UserRepository;
-import br.com.hahn.toxicbet.model.UserRequestDTO;
 import br.com.hahn.toxicbet.model.UserResponseDTO;
 import br.com.hahn.toxicbet.util.DateTimeConverter;
 import lombok.AllArgsConstructor;
@@ -27,10 +26,12 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final BetRepository betRepository;
+    private final AuthServiceRegistrationService authServiceRegistrationService;
 
-    public Mono<Void> registerUser(UserRequestDTO userRequestDTO) {
-        return userRepository.save(userMapper.toEntity(userRequestDTO))
+    public Mono<Void> registerUser(String userName, String userEmail, String authorizationHeader) {
+        return userRepository.save(userMapper.toEntity(userName, userEmail))
                 .doOnNext(savedUser -> log.info("User registered successfully with email: {}", savedUser.getEmail()))
+                .then(authServiceRegistrationService.registerService(authorizationHeader))
                 .then();
     }
 
