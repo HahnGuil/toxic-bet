@@ -41,4 +41,10 @@ public class UserController extends AbstractController implements UsersApi {
         Mono<Boolean> response = userService.existsByEmail(userEmail);
         return response.map(exists -> ResponseEntity.status(HttpStatus.OK).body(exists));
     }
+
+    @Override
+    public Mono<ResponseEntity<Void>> patchUserByEmailHeader(String userEmail, ServerWebExchange exchange) {
+        return userService.updateUserRole(userEmail)
+                .thenReturn(ResponseEntity.status(HttpStatus.NO_CONTENT).build());
+    }
 }

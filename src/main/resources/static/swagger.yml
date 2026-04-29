@@ -151,6 +151,44 @@ paths:
                   value:
                     timestamp: "2024-12-08T19:30:00Z"
                     message: "User not found."
+    patch:
+      tags:
+        - users
+      summary: Operation to update user email
+      description: Updates user data using authenticated context and email provided in header.
+      operationId: patchUserByEmailHeader
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: userEmail
+          in: header
+          required: true
+          description: User email to update
+          schema:
+            type: string
+            format: email
+            example: "usuario@exemplo.com"
+      responses:
+        '204':
+          description: User updated successfully
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
   /match/end-bet:
     patch:
       tags:

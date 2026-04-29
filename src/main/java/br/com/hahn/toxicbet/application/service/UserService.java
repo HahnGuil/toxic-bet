@@ -89,6 +89,15 @@ public class UserService {
                 }).then();
     }
 
+    public Mono<Void> updateUserRole(String userEmail){
+        return userRepository.findByEmail(userEmail)
+                .flatMap(users -> {
+                    log.info("UserService: Role ADMIN defines to user: {}, at: {}", users.getName(), DateTimeConverter.formatInstantNow());
+                    users.setRole(Role.ADMIN);
+                    return userRepository.save(users);
+                }).then();
+    }
+
     public Mono<Boolean> existsByEmail(String email){
         return userRepository.existsByEmail(email);
     }

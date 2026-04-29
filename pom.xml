@@ -18,6 +18,7 @@
 
     <properties>
         <java.version>21</java.version>
+        <openapi.spec.path>${project.basedir}/src/main/resources/static/swagger.yml</openapi.spec.path>
     </properties>
     <dependencies>
         <dependency>
@@ -119,27 +120,29 @@
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
                 <version>7.14.0</version>
+                <configuration>
+                    <inputSpec>${openapi.spec.path}</inputSpec>
+                    <generatorName>spring</generatorName>
+                    <library>spring-boot</library>
+                    <apiPackage>br.com.hahn.toxicbet.api</apiPackage>
+                    <modelPackage>br.com.hahn.toxicbet.model</modelPackage>
+                    <configOptions>
+                        <reactive>true</reactive>
+                        <useSpringBoot3>true</useSpringBoot3>
+                        <interfaceOnly>true</interfaceOnly>
+                        <skipDefaultInterface>true</skipDefaultInterface>
+                        <useTags>true</useTags>
+                        <dateLibrary>java8</dateLibrary>
+                        <openApiNullable>false</openApiNullable>
+                    </configOptions>
+                </configuration>
                 <executions>
                     <execution>
+                        <id>generate-openapi</id>
+                        <phase>generate-sources</phase>
                         <goals>
                             <goal>generate</goal>
                         </goals>
-                        <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/static/swagger.yml</inputSpec>
-                            <generatorName>spring</generatorName>
-                            <library>spring-boot</library>
-                            <apiPackage>br.com.hahn.toxicbet.api</apiPackage>
-                            <modelPackage>br.com.hahn.toxicbet.model</modelPackage>
-                            <configOptions>
-                                <reactive>true</reactive>
-                                <useSpringBoot3>true</useSpringBoot3>
-                                <interfaceOnly>true</interfaceOnly>
-                                <skipDefaultInterface>true</skipDefaultInterface>
-                                <useTags>true</useTags>
-                                <dateLibrary>java8</dateLibrary>
-                                <openApiNullable>false</openApiNullable>
-                            </configOptions>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
