@@ -15,8 +15,6 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.Duration;
-
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -24,7 +22,6 @@ public class MatchController extends AbstractController implements MatchApi {
 
     private final MatchService matchService;
     private final MatchEventPublisherService matchEventPublisherService;
-    private static final Long STREAM_DELAY_DURATION = 1L;
 
     @Override
     public Mono<ResponseEntity<MatchResponseDTO>> postCreateMatch(Mono<MatchRequestDTO> matchRequestDTO, ServerWebExchange exchange) {
@@ -35,20 +32,23 @@ public class MatchController extends AbstractController implements MatchApi {
 
     @GetMapping(value = "/match", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<MatchResponseDTO> streamAllMatches() {
+
         Flux<MatchResponseDTO> existingMatches = matchService.findAll();
+
         Flux<MatchResponseDTO> eventStream = getEventStream();
-        return Flux.merge(existingMatches, eventStream)
-                .delayElements(Duration.ofSeconds(STREAM_DELAY_DURATION));
+
+        return existingMatches.concatWith(eventStream);
     }
 
     @GetMapping(value = "/match/find-open", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<MatchResponseDTO> streamOpenBettingMatches(){
-       Flux<MatchResponseDTO> openMatches = matchService.findMatchesOpenToBets();
+    public Flux<MatchResponseDTO> streamOpenBettingMatches() {
 
-       Flux<MatchResponseDTO> openEventsOnly = getEventStream()
-               .filter(matchResponseDTO -> MatchResponseDTO.ResultEnum.OPEN_FOR_BETTING.equals(matchResponseDTO.getResult()));
+        Flux<MatchResponseDTO> openMatches = matchService.findMatchesOpenToBets();
 
-       return Flux.merge(openMatches, openEventsOnly).delayElements(Duration.ofSeconds(STREAM_DELAY_DURATION));
+        Flux<MatchResponseDTO> openEventsOnly = getEventStream()
+                .filter(match -> MatchResponseDTO.ResultEnum.OPEN_FOR_BETTING.equals(match.getResult()));
+
+        return openMatches.concatWith(openEventsOnly);
     }
 
     @Override
