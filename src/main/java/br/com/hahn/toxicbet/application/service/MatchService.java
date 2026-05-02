@@ -139,6 +139,20 @@ public class MatchService {
         ).map(matchResponse -> mapper.toDto(match, matchResponse.getT1().getName(), matchResponse.getT2().getName(), matchResponse.getT3().getName()));
     }
 
+    public Flux<MatchResponseDTO> findMatchByChampionship(Long championshipId) {
+        return repository.findAll()
+                .filter(match -> match.getChampionshipId() != null
+                        && match.getChampionshipId().equals(championshipId))
+                .flatMap(this::buildMatchResponseDTO);
+    }
+
+    public Flux<MatchResponseDTO> findOpenMatchesByChampionship(Long championshipId) {
+        return repository.findAll()
+                .filter(match -> match.getChampionshipId() != null
+                        && match.getChampionshipId().equals(championshipId))
+                .filter(match -> Result.OPEN_FOR_BETTING.equals(match.getResult()))
+                .flatMap(this::buildMatchResponseDTO);
+    }
 //    -----
 
     private Mono<MatchResponseDTO> fetchTeamsAndCreateMatch(MatchRequestDTO dto) {

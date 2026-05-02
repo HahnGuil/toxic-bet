@@ -3,25 +3,21 @@ spring:
     name: toxic-bet
 
   r2dbc:
-    url: r2dbc:postgresql://${POSTGRES_LOCAL_HOST:${POSTGRES_DEV_HOST:localhost}}:${POSTGRES_LOCAL_PORT:${POSTGRES_DEV_PORT:5435}}/${POSTGRES_LOCAL_DB:${POSTGRES_DEV_DB}}
-    username: ${POSTGRES_LOCAL_USER:${POSTGRES_DEV_USER}}
-    password: ${POSTGRES_LOCAL_PASSWORD:${POSTGRES_DEV_PASSWORD}}
+    url: r2dbc:postgresql://${POSTGRES_DOCKER_HOST:postgres}:${POSTGRES_DOCKER_PORT:5432}/${POSTGRES_DOCKER_DB}
+    username: ${POSTGRES_DOCKER_USER}
+    password: ${POSTGRES_DOCKER_PASSWORD}
 
   flyway:
-    url: jdbc:postgresql://${POSTGRES_LOCAL_HOST:${POSTGRES_DEV_HOST:localhost}}:${POSTGRES_LOCAL_PORT:${POSTGRES_DEV_PORT:5435}}/${POSTGRES_LOCAL_DB:${POSTGRES_DEV_DB}}
-    user: ${POSTGRES_LOCAL_USER:${POSTGRES_DEV_USER}}
-    password: ${POSTGRES_LOCAL_PASSWORD:${POSTGRES_DEV_PASSWORD}}
+    url: jdbc:postgresql://${POSTGRES_DOCKER_HOST:postgres}:${POSTGRES_DOCKER_PORT:5432}/${POSTGRES_DOCKER_DB}
+    user: ${POSTGRES_DOCKER_USER}
+    password: ${POSTGRES_DOCKER_PASSWORD}
     enabled: true
-
-  sql:
-    init:
-      mode: always
 
   security:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: ${AUTH_SERVER_LOCAL_JWK_SET_URI:${AUTH_SERVER_JWK_SET_URI:http://localhost:2310/auth-server/public-key/jwks}}
+          jwk-set-uri: ${AUTH_SERVER_JWK_SET_URI:http://localhost:2300/auth-server/public-key/jwks}
           jwk-cache-lifespan: 3600000
           connect-timeout: 30000
           read-timeout: 30000
@@ -36,12 +32,10 @@ server:
 
 logging:
   level:
-    org.springframework.security: DEBUG
-    org.springframework.security.oauth2: DEBUG
-    br.com.hahn.toxicbet: DEBUG
+    org.springframework.security: INFO
+    br.com.hahn.toxicbet: INFO
 
 integration:
   auth:
-    base-url: http://localhost:2310
-    application-public-id: "f5b67d2b-df62-437a-a961-ee73e0cbc5fc"
-
+    base-url: ${AUTH_SERVER_BASE_URL:http://ms-auth-server:2300}
+    application-public-id: "88a2c306-25df-442d-9ba1-cb3565edf872"

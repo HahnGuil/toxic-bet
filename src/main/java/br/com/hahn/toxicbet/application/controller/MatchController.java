@@ -32,23 +32,32 @@ public class MatchController extends AbstractController implements MatchApi {
 
     @GetMapping(value = "/match", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<MatchResponseDTO> streamAllMatches() {
-
         Flux<MatchResponseDTO> existingMatches = matchService.findAll();
-
         Flux<MatchResponseDTO> eventStream = getEventStream();
-
         return existingMatches.concatWith(eventStream);
     }
 
     @GetMapping(value = "/match/find-open", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<MatchResponseDTO> streamOpenBettingMatches() {
-
         Flux<MatchResponseDTO> openMatches = matchService.findMatchesOpenToBets();
-
         Flux<MatchResponseDTO> openEventsOnly = getEventStream()
                 .filter(match -> MatchResponseDTO.ResultEnum.OPEN_FOR_BETTING.equals(match.getResult()));
-
         return openMatches.concatWith(openEventsOnly);
+    }
+
+    @GetMapping(value = "/match/open/by-championship", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<MatchResponseDTO> streamOpenBettingMatchesByChampionship(@RequestParam Long championshipId) {
+        Flux<MatchResponseDTO> openMatchesByChampionship = matchService.findOpenMatchesByChampionship(championshipId);
+        Flux<MatchResponseDTO> openEventsOnly = getEventStream()
+                .filter(m -> m.getChampionshipId() != null && m.getChampionshipId().equals(championshipId));
+        return openMatchesByChampionship.concatWith(openEventsOnly);
+    }
+
+    @GetMapping(value = "/match/by-championship", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<MatchResponseDTO> streamMatchesByChampionship(@RequestParam Long championshipId) {
+        Flux<MatchResponseDTO> matchesByChampionship = matchService.findMatchByChampionship(championshipId);
+        Flux<MatchResponseDTO> matchsByChampionship = getEventStream();
+        return matchesByChampionship.concatWith(matchsByChampionship);
     }
 
     @Override
@@ -57,6 +66,9 @@ public class MatchController extends AbstractController implements MatchApi {
                 .flatMap(userEmail -> matchService.closeMatchForBet(matchId, userEmail))
                 .then(Mono.just(ResponseEntity.status(HttpStatus.NO_CONTENT).build()));
     }
+
+//
+//    /match/by-championship
 
     @Override
     public Mono<ResponseEntity<Void>> patchCloseMatch(Long matchId, String result, ServerWebExchange exchange) {

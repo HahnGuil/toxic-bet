@@ -4,6 +4,7 @@ import br.com.hahn.toxicbet.api.BetApi;
 import br.com.hahn.toxicbet.application.service.BetService;
 import br.com.hahn.toxicbet.application.service.MatchEventPublisherService;
 import br.com.hahn.toxicbet.application.service.MatchService;
+import br.com.hahn.toxicbet.application.service.UserService;
 import br.com.hahn.toxicbet.model.BetRequestDTO;
 import br.com.hahn.toxicbet.model.BetResponseDTO;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -22,18 +24,32 @@ public class BetController extends AbstractController implements BetApi {
     private final BetService betService;
     private final MatchService matchService;
     private final MatchEventPublisherService matchEventPublisherService;
+    private final UserService userService;
 
     @Override
     public Mono<ResponseEntity<BetResponseDTO>> postRegisterBet(Mono<BetRequestDTO> betRequestDTO, ServerWebExchange exchange) {
         return extractUserEmailFromToken(exchange)
-                .flatMap(userEmail -> betService.placeBet(betRequestDTO, userEmail))
-                .flatMap(betResponse ->
-                        matchService.findById(betResponse.getMatchId())
-                                .flatMap(matchService::buildMatchResponseDTO)
-                                .doOnSuccess(matchEventPublisherService::publishOddsUpdate)
-                                .thenReturn(betResponse)
+                .flatMap(userEmail ->
+                        betService.placeBet(betRequestDTO, userEmail)
+                                .flatMap(betResponse ->
+                                        userService.findByEmail(userEmail)
+                                                .doOnNext(user -> betService.publishBetEvent(user.getId(), betResponse))
+                                                .thenReturn(betResponse)
+                                )
+                                .flatMap(betResponse ->
+                                        matchService.findById(betResponse.getMatchId())
+                                                .flatMap(matchService::buildMatchResponseDTO)
+                                                .doOnSuccess(matchEventPublisherService::publishOddsUpdate)
+                                                .thenReturn(betResponse)
+                                )
                 )
                 .map(dto -> ResponseEntity.status(HttpStatus.CREATED).body(dto));
     }
-}
 
+    @Override
+    public Mono<ResponseEntity<Flux<BetResponseDTO>>> getBetForUser(ServerWebExchange exchange) {
+        Flux<BetResponseDTO> stream = extractUserEmailFromToken(exchange)
+                .flatMapMany(betService::streamBetsByUser);
+        return Mono.just(ResponseEntity.ok(stream));
+    }
+}
