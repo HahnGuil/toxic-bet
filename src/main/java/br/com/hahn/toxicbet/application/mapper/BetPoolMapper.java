@@ -1,16 +1,14 @@
 package br.com.hahn.toxicbet.application.mapper;
 
 import br.com.hahn.toxicbet.domain.model.BettingPool;
-import br.com.hahn.toxicbet.domain.model.Users;
 import br.com.hahn.toxicbet.domain.model.dto.BettingPoolDTO;
 import br.com.hahn.toxicbet.model.BettingPoolResponseDTO;
+import br.com.hahn.toxicbet.model.BettingPoolUserPointsDTO;
 import br.com.hahn.toxicbet.model.BettingPoolUsersResponseDTO;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 @Component
 public class BetPoolMapper {
@@ -40,10 +38,11 @@ public class BetPoolMapper {
         return bettingPoolResponseDTO;
     }
 
-    public BettingPoolUsersResponseDTO toBettingPoolUserDTO(BettingPool bettingPool, Map<String, Double> users){
+    public BettingPoolUsersResponseDTO toBettingPoolUserDTO(BettingPool bettingPool, List<BettingPoolUserPointsDTO> users){
         BettingPoolUsersResponseDTO usersBettingPool = new BettingPoolUsersResponseDTO();
         usersBettingPool.bettingPoolId(bettingPool.getId());
         usersBettingPool.bettingPoolKey(bettingPool.getBettingPoolKey());
+        usersBettingPool.bettingPoolName(bettingPool.getBettingPoolName());
         usersBettingPool.setUsers(users);
 
         return usersBettingPool;

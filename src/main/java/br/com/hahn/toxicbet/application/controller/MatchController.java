@@ -49,7 +49,9 @@ public class MatchController extends AbstractController implements MatchApi {
     public Flux<MatchResponseDTO> streamOpenBettingMatchesByChampionship(@RequestParam Long championshipId) {
         Flux<MatchResponseDTO> openMatchesByChampionship = matchService.findOpenMatchesByChampionship(championshipId);
         Flux<MatchResponseDTO> openEventsOnly = getEventStream()
-                .filter(m -> m.getChampionshipId() != null && m.getChampionshipId().equals(championshipId));
+                .filter(m -> m.getChampionshipId() != null
+                        && m.getChampionshipId().equals(championshipId)
+                        && MatchResponseDTO.ResultEnum.OPEN_FOR_BETTING.equals(m.getResult()));
         return openMatchesByChampionship.concatWith(openEventsOnly);
     }
 

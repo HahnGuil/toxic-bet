@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -23,9 +24,9 @@ public class BettingPoolController extends AbstractController implements Betting
     }
 
     @Override
-    public Mono<ResponseEntity<BettingPoolUsersResponseDTO>> getUsersByBettingPool(String bettingPoolKey, ServerWebExchange exchange) {
-        return bettingPoolService.getBettingPoolUsers(bettingPoolKey)
-                .map(bettingPoolUsersResponseDTO -> ResponseEntity.status(HttpStatus.OK).body(bettingPoolUsersResponseDTO));
+    public Mono<ResponseEntity<Flux<BettingPoolUsersResponseDTO>>> getUsersByBettingPool(ServerWebExchange exchange) {
+        return Mono.just(ResponseEntity.status(HttpStatus.OK)
+                .body(bettingPoolService.getBettingPoolUsers(extractUserEmailFromToken(exchange))));
     }
 
     @Override

@@ -43,7 +43,7 @@ public class BetService {
                     Flux<BetResponseDTO> existing = betRepository.findByUserId(userId)
                             .map(betMapper::toDTO);
                     Flux<BetResponseDTO> liveEvents = betEventPublisherService.streamBetsForUser(userId);
-                    return existing.concatWith(liveEvents);
+                    return Flux.merge(existing, liveEvents);
                 });
     }
 

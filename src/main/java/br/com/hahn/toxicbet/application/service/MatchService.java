@@ -8,7 +8,6 @@ import br.com.hahn.toxicbet.domain.model.Team;
 import br.com.hahn.toxicbet.domain.model.enums.BaseValues;
 import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
 import br.com.hahn.toxicbet.domain.model.enums.Result;
-import br.com.hahn.toxicbet.domain.model.enums.Role;
 import br.com.hahn.toxicbet.domain.repository.MatchRepository;
 import br.com.hahn.toxicbet.model.MatchRequestDTO;
 import br.com.hahn.toxicbet.model.MatchResponseDTO;
@@ -31,6 +30,7 @@ public class MatchService {
     private final MatchMapper mapper;
     private final ChampionshipService championshipService;
     private final UserService userService;
+    private final MatchEventPublisherService matchEventPublisherService;
 
 
     public Mono<MatchResponseDTO> createMatchDto(Mono<MatchRequestDTO> matchRequestDTOMono, String userEmail) {
@@ -61,7 +61,10 @@ public class MatchService {
                 .filter(match -> !match.getMatchTime().isBefore(now) && !match.getMatchTime().isAfter(limit))
                 .flatMap(match -> {
                     match.setResult(Result.OPEN_FOR_BETTING);
-                    return repository.save(match);
+                    return repository.save(match)
+                            .flatMap(this::buildMatchResponseDTO)
+                            .doOnNext(matchEventPublisherService::publishMatchUpdate)
+                            .thenReturn(match);
                 }).count();
     }
 
@@ -113,7 +116,10 @@ public class MatchService {
                         .switchIfEmpty(Mono.error(new NotFoundException(ErrorMessages.MATCH_NOT_OPEN_TO_BETS.getMessage())))
                         .flatMap(match -> {
                             match.setResult(Result.OPEN_FOR_BETTING);
-                            return repository.save(match);
+                            return repository.save(match)
+                                    .flatMap(this::buildMatchResponseDTO)
+                                    .doOnNext(matchEventPublisherService::publishMatchUpdate)
+                                    .then();
                         })
                         .then());
     }

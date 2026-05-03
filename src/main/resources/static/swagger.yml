@@ -894,30 +894,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDTO'
 
-  /bettingPoll/getUsers/{bettingPoolKey}:
+  /bettingPool/getUsers:
     get:
       tags:
         - betting_pool
-      summary: Operation to list users of bettingPool
-      description: List the users of bettingPool order by user points desc
+      summary: Operation to list user betting pools
+      description: Lists all betting pools where the authenticated user participates, including users ordered by points descending.
       operationId: getUsersByBettingPool
       security:
         - bearerAuth: [ ]
-      parameters:
-        - name: bettingPoolKey
-          in: path
-          required: true
-          description: Unique code of the betting pool
-          schema:
-            type: string
-            example: "A23BC45DE"
       responses:
         '200':
-          description: Betting pool found
+          description: Betting pools found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BettingPoolUsersResponseDTO'
+                type: array
+                items:
+                  $ref: '#/components/schemas/BettingPoolUsersResponseDTO'
         '401':
           description: Unauthorized
           content:
@@ -1384,15 +1378,27 @@ components:
           type: string
           description: Unique Key of BettingPoll
           example: "A23BC45DE"
+        bettingPoolName:
+          type: string
+          description: Name of betting pool
+          example: "Old guys toxic bet"
         users:
-          type: object
-          description: Map userName
-          additionalProperties:
-            type: number
-            format: double
-          example:
-            "John Coffee": 12.5
-            "Jane Doe": 7.0
+          type: array
+          description: Users ordered by points descending
+          items:
+            $ref: '#/components/schemas/BettingPoolUserPointsDTO'
+    BettingPoolUserPointsDTO:
+      type: object
+      properties:
+        userName:
+          type: string
+          description: User name
+          example: "John Coffee"
+        points:
+          type: number
+          format: double
+          description: User total points
+          example: 12.5
     BettingPoolResponseDTO:
       type: object
       properties:

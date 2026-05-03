@@ -16,13 +16,17 @@ public class MatchEventPublisherService {
         this.sink = Sinks.many().multicast().directBestEffort();
     }
 
-    public void publishOddsUpdate(MatchResponseDTO match) {
+    public void publishMatchUpdate(MatchResponseDTO match) {
 
         Sinks.EmitResult result = sink.tryEmitNext(match);
 
         if (result.isFailure()) {
-            log.warn("Falha ao emitir evento de odds: {}", result);
+            log.warn("Falha ao emitir evento de partida: {}", result);
         }
+    }
+
+    public void publishOddsUpdate(MatchResponseDTO match) {
+        publishMatchUpdate(match);
     }
 
     public Flux<MatchResponseDTO> getAllEventsStream() {

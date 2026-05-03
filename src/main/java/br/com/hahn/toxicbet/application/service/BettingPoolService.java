@@ -9,8 +9,11 @@ import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
 import br.com.hahn.toxicbet.domain.repository.BettingPoolRepository;
 import br.com.hahn.toxicbet.model.BettingPoolRequestDTO;
 import br.com.hahn.toxicbet.model.BettingPoolResponseDTO;
+import br.com.hahn.toxicbet.model.BettingPoolUserPointsDTO;
 import br.com.hahn.toxicbet.model.BettingPoolUsersResponseDTO;
 import br.com.hahn.toxicbet.model.SuccessResponseDTO;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import br.com.hahn.toxicbet.util.DateTimeConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +21,11 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +35,7 @@ public class BettingPoolService {
     private final BettingPoolRepository bettingPoolRepository;
     private final BetPoolMapper betPoolMapper;
     private final UserService userService;
+    private final ObjectMapper objectMapper;
 
     public Mono<BettingPoolResponseDTO> createBettingPool(Mono<BettingPoolRequestDTO> requestDTOMono, Mono<String> userEmailMono) {
         return requestDTOMono
@@ -78,26 +85,21 @@ public class BettingPoolService {
         return userEmailMono.flatMap(userService::findUserByEmail);
     }
 
-    public Mono<BettingPoolUsersResponseDTO> getBettingPoolUsers(String bettingPoolKey){
-        return findByBettingPoolKey(bettingPoolKey)
-                .doOnSubscribe(subscription -> log.info("BettingPoolService: Get User from bettingPoool with key: {}", bettingPoolKey))
-                .flatMap(bettingPool ->
-                        Flux.fromIterable(bettingPool.getUserIds())
-                                .map(UUID::fromString)
-                                .flatMap(userService::findById)
-                                .map(this::toUserEntity)
-                                .collectList()
-                                .map(entries -> entries.stream()
-                                        .sorted(Map.Entry.<String, Double>comparingByValue(Comparator.nullsFirst(Double::compareTo)).reversed())
-                                        .collect(Collectors.toMap(
-                                                Map.Entry::getKey,
-                                                Map.Entry::getValue,
-                                                (a, b) -> a,
-                                                LinkedHashMap::new
-                                        )))
-                                .map(usersMap -> betPoolMapper.toBettingPoolUserDTO(bettingPool, usersMap))
-                );
+    public Flux<BettingPoolUsersResponseDTO> getBettingPoolUsers(Mono<String> userEmailMono) {
+        return findUserIdByEmail(userEmailMono)
+                .map(UUID::toString)
+                .flatMapMany(bettingPoolRepository::findAllByUserId)
+                .doOnSubscribe(subscription -> log.info("BettingPoolService: Listing betting pools for authenticated user"))
+                .flatMap(this::toBettingPoolUsersResponse);
+    }
 
+    private Mono<BettingPoolUsersResponseDTO> toBettingPoolUsersResponse(BettingPool bettingPool) {
+        return Flux.fromIterable(Optional.ofNullable(bettingPool.getUserIds()).orElseGet(ArrayList::new))
+                .map(UUID::fromString)
+                .flatMap(userService::findById)
+                .map(this::toUserPointsDTO)
+                .collectSortedList(Comparator.comparing(BettingPoolUserPointsDTO::getPoints, Comparator.nullsFirst(Double::compareTo)).reversed())
+                .map(users -> betPoolMapper.toBettingPoolUserDTO(bettingPool, users));
     }
 
     private Mono<BettingPool> findByBettingPoolKey(String bettingPoolKey){
@@ -107,10 +109,35 @@ public class BettingPoolService {
                         log.error("BettingPoolService: NOT_FOUND. Not found bettingPool with key: {}. Throw NotFoundExcepton", bettingPoolKey));
     }
 
-    private Map.Entry<String, Double> toUserEntity(Users users){
-        String key = users.getName();
-        Double value = users.getUserPoints() == null ? 0.0 : users.getUserPoints();
-        return new AbstractMap.SimpleEntry<>(key, value);
+    private BettingPoolUserPointsDTO toUserPointsDTO(Users users) {
+        return new BettingPoolUserPointsDTO()
+                .userName(extractReadableUserName(users.getName()))
+                .points(users.getUserPoints() == null ? 0.0 : users.getUserPoints());
+    }
+
+    private String extractReadableUserName(String rawUserName) {
+        if (rawUserName == null || rawUserName.isBlank()) {
+            return "Unknown User";
+        }
+        String trimmedName = rawUserName.trim();
+
+        if (!trimmedName.startsWith("{")) {
+            return trimmedName;
+        }
+
+        try {
+            JsonNode node = objectMapper.readTree(trimmedName);
+            if (node.hasNonNull("userName")) {
+                return node.get("userName").asText();
+            }
+            if (node.hasNonNull("name")) {
+                return node.get("name").asText();
+            }
+        } catch (Exception exception) {
+            log.debug("BettingPoolService: Could not parse user name payload, returning raw value: {}", trimmedName);
+        }
+
+        return trimmedName;
     }
 
     private Mono<String> generateKeyForBettingPool() {
