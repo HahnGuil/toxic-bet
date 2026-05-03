@@ -32,4 +32,13 @@ public class ApplicationScheduler {
                         count -> log.info("ApplicationScheduler: Updating: {} matches to OPENT_TO_BETTING", count),
                         error -> log.error(ERROR_SCHEDULER + ": {}", error.getMessage()));
     }
+
+    @Scheduled(cron = "0 0 9 * * *")
+    public void deleteOldMatches(){
+        log.info("ApplicationScheduler: Starting to delete old matches");
+        matchService.deleteOndMatch()
+                .subscribe(
+                        count -> log.info("ApplicationScheduler: Delete: {} old matchs", count),
+                        error -> log.error(ERROR_SCHEDULER + ": {}", error.getMessage()));
+    }
 }

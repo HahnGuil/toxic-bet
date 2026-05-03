@@ -68,6 +68,24 @@ public class MatchService {
                 }).count();
     }
 
+    public Mono<Long> deleteOndMatch() {
+        log.info("ApplicationScheduler: Starting to delete old matches at: {}", DateTimeConverter.formatInstantNow());
+
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(2);
+
+        return repository.findAll()
+                .filter(match ->
+                        match.getResult() == Result.HOME_WIN
+                                || match.getResult() == Result.VISITING_WIN
+                                || match.getResult() == Result.DRAW
+                )
+                .filter(match -> match.getMatchTime().isBefore(cutoff))
+                .flatMap(repository::delete)
+                .count()
+                .doOnSuccess(count ->
+                        log.info("ApplicationScheduler: Deleted {} old matches at: {}", count, DateTimeConverter.formatInstantNow()));
+    }
+
     public Mono<Long> updateMatchesToInProgress(){
         return repository.findAll()
                 .filter(match -> match.getResult() == Result.OPEN_FOR_BETTING)
@@ -159,6 +177,14 @@ public class MatchService {
                 .filter(match -> Result.OPEN_FOR_BETTING.equals(match.getResult()))
                 .flatMap(this::buildMatchResponseDTO);
     }
+    public Mono<String> getHomeTeamName(Long homeTeamId) {
+        return teamService.findById(homeTeamId).map(team -> team.getName());
+    }
+
+    public Mono<String> getVisitingTeamName(Long visitingTeamId) {
+        return teamService.findById(visitingTeamId).map(team -> team.getName());
+    }
+
 //    -----
 
     private Mono<MatchResponseDTO> fetchTeamsAndCreateMatch(MatchRequestDTO dto) {

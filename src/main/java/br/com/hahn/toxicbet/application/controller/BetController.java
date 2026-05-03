@@ -1,16 +1,19 @@
 package br.com.hahn.toxicbet.application.controller;
 
 import br.com.hahn.toxicbet.api.BetApi;
+import br.com.hahn.toxicbet.application.mapper.BetMapper;
 import br.com.hahn.toxicbet.application.service.BetService;
 import br.com.hahn.toxicbet.application.service.MatchEventPublisherService;
 import br.com.hahn.toxicbet.application.service.MatchService;
 import br.com.hahn.toxicbet.application.service.UserService;
 import br.com.hahn.toxicbet.model.BetRequestDTO;
 import br.com.hahn.toxicbet.model.BetResponseDTO;
+import br.com.hahn.toxicbet.model.BetResultResponseDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
@@ -22,6 +25,7 @@ import reactor.core.publisher.Mono;
 public class BetController extends AbstractController implements BetApi {
 
     private final BetService betService;
+    private final BetMapper betMapper;
     private final MatchService matchService;
     private final MatchEventPublisherService matchEventPublisherService;
     private final UserService userService;
@@ -52,4 +56,21 @@ public class BetController extends AbstractController implements BetApi {
                 .flatMapMany(betService::streamBetsByUser);
         return Mono.just(ResponseEntity.ok(stream));
     }
+
+    @GetMapping("/bet/results")
+    public Mono<ResponseEntity<Flux<BetResultResponseDTO>>> getBetResults(ServerWebExchange exchange) {
+        Flux<br.com.hahn.toxicbet.domain.model.dto.BetResultResponseDTO> domainResults = extractUserEmailFromToken(exchange)
+                .flatMapMany(betService::getBetResults);
+        Flux<BetResultResponseDTO> results = domainResults.map(betMapper::toApiBetResultResponse);
+        return Mono.just(ResponseEntity.ok(results));
+    }
+
+    @GetMapping("/bet/results/open")
+    public Mono<ResponseEntity<Flux<BetResultResponseDTO>>> getOpenOrInProgressBetResults(ServerWebExchange exchange) {
+        Flux<br.com.hahn.toxicbet.domain.model.dto.BetResultResponseDTO> domainResults = extractUserEmailFromToken(exchange)
+                .flatMapMany(betService::getBetResultsInProgressOrOpen);
+        Flux<BetResultResponseDTO> results = domainResults.map(betMapper::toApiBetResultResponse);
+        return Mono.just(ResponseEntity.ok(results));
+    }
 }
+

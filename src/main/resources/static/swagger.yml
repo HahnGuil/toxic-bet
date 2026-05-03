@@ -776,6 +776,66 @@ paths:
                   value:
                     timestamp: "2024-12-08T19:30:00Z"
                     message: "User not found, please register."
+  /bet/results:
+    get:
+      tags:
+        - bet
+      summary: Operation to get results for finished bets
+      description: Returns the authenticated user bets for matches that already finished (HOME_WIN, VISITING_WIN or DRAW).
+      operationId: getBetResults
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: Stream of bet results for finished matches
+          content:
+            text/event-stream:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BetResultResponseDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+  /bet/results/open:
+    get:
+      tags:
+        - bet
+      summary: Operation to get open or in-progress bet results
+      description: Returns the authenticated user bets for matches with result IN_PROGRESS or OPEN_FOR_BETTING.
+      operationId: getOpenOrInProgressBetResults
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: Stream of bet results for open or in-progress matches
+          content:
+            text/event-stream:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BetResultResponseDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
   /bettingPool:
     post:
       tags:
@@ -1359,6 +1419,37 @@ components:
           format: double
           description: Odds the user will receive if they win the bet.
           example: 2.45
+    BetResultResponseDTO:
+      type: object
+      properties:
+        homeTeamName:
+          type: string
+          description: Name of home team
+          example: "Brazil"
+        visitingTeamName:
+          type: string
+          description: Name of visiting team
+          example: "USA"
+        matchResult:
+          type: string
+          enum: [ HOME_WIN, VISITING_WIN, DRAW, NOT_STARTED, IN_PROGRESS, OPEN_FOR_BETTING ]
+          description: Current result/status of the match
+          example: "IN_PROGRESS"
+        betResult:
+          type: string
+          enum: [ HOME_WIN, VISITING_WIN, DRAW, NOT_STARTED, IN_PROGRESS, OPEN_FOR_BETTING ]
+          description: Result chosen by the user in the bet
+          example: "HOME_WIN"
+        betOdds:
+          type: number
+          format: double
+          description: Odds associated with the bet
+          example: 2.45
+        resultado:
+          type: string
+          enum: [ HOME_WIN, VISITING_WIN, DRAW, NOT_STARTED, IN_PROGRESS, OPEN_FOR_BETTING ]
+          description: Returned result for this view (replaces winner)
+          example: "OPEN_FOR_BETTING"
     BettingPoolRequestDTO:
       type: object
       properties:

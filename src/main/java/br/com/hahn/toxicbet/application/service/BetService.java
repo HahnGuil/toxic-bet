@@ -2,6 +2,7 @@ package br.com.hahn.toxicbet.application.service;
 
 import br.com.hahn.toxicbet.application.mapper.BetMapper;
 import br.com.hahn.toxicbet.domain.exception.BusinessException;
+import br.com.hahn.toxicbet.domain.model.dto.BetResultResponseDTO;
 import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
 import br.com.hahn.toxicbet.domain.model.enums.Result;
 import br.com.hahn.toxicbet.domain.repository.BetRepository;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -49,6 +51,54 @@ public class BetService {
 
     public void publishBetEvent(UUID userId, BetResponseDTO bet) {
         betEventPublisherService.publishBetPlaced(userId, bet);
+    }
+
+    public Flux<BetResultResponseDTO> getBetResults(String userEmail) {
+        Set<Result> finishedResults = Set.of(Result.HOME_WIN, Result.VISITING_WIN, Result.DRAW);
+
+        return userService.findByEmail(userEmail)
+                .flatMapMany(user -> betRepository.findByUserId(user.getId()))
+                .flatMap(bet -> matchService.findById(bet.getMatchId())
+                        .filter(match -> finishedResults.contains(match.getResult()))
+                        .flatMap(match -> Mono.zip(
+                                matchService.getHomeTeamName(match.getHomeTeamId()),
+                                matchService.getVisitingTeamName(match.getVisitingTeamId()),
+                                Mono.just(match),
+                                Mono.just(bet)
+                        ))
+                        .map(tuple -> new BetResultResponseDTO(
+                                tuple.getT1(),
+                                tuple.getT2(),
+                                tuple.getT3().getResult(),
+                                tuple.getT4().getResult(),
+                                tuple.getT4().getBetOdds(),
+                                tuple.getT3().getResult()
+                        ))
+                );
+    }
+
+    public Flux<BetResultResponseDTO> getBetResultsInProgressOrOpen(String userEmail) {
+        Set<Result> inProgressResults = Set.of(Result.IN_PROGRESS, Result.OPEN_FOR_BETTING);
+
+        return userService.findByEmail(userEmail)
+                .flatMapMany(user -> betRepository.findByUserId(user.getId()))
+                .flatMap(bet -> matchService.findById(bet.getMatchId())
+                        .filter(match -> inProgressResults.contains(match.getResult()))
+                        .flatMap(match -> Mono.zip(
+                                matchService.getHomeTeamName(match.getHomeTeamId()),
+                                matchService.getVisitingTeamName(match.getVisitingTeamId()),
+                                Mono.just(match),
+                                Mono.just(bet)
+                        ))
+                        .map(tuple -> new BetResultResponseDTO(
+                                tuple.getT1(),
+                                tuple.getT2(),
+                                tuple.getT3().getResult(),
+                                tuple.getT4().getResult(),
+                                tuple.getT4().getBetOdds(),
+                                tuple.getT3().getResult()
+                        ))
+                );
     }
 
     private Mono<Void> isMatchOpenToBet(Long matchId) {

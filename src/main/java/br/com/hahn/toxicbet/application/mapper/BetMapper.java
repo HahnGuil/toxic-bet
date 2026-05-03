@@ -4,6 +4,7 @@ import br.com.hahn.toxicbet.domain.model.Bet;
 import br.com.hahn.toxicbet.domain.model.enums.Result;
 import br.com.hahn.toxicbet.model.BetRequestDTO;
 import br.com.hahn.toxicbet.model.BetResponseDTO;
+import br.com.hahn.toxicbet.model.BetResultResponseDTO;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -28,5 +29,28 @@ public class BetMapper {
         betResponseDTO.setResult(String.valueOf(bet.getResult()));
         betResponseDTO.setOdds(bet.getBetOdds());
         return betResponseDTO;
+    }
+
+    public BetResultResponseDTO toApiBetResultResponse(br.com.hahn.toxicbet.domain.model.dto.BetResultResponseDTO source) {
+        if (source == null) return null;
+        return new BetResultResponseDTO()
+                .homeTeamName(source.homeTeamName())
+                .visitingTeamName(source.visitingTeamName())
+                .matchResult(toApiMatchResult(source.matchResult()))
+                .betResult(toApiBetResult(source.betResult()))
+                .betOdds(source.betOdds())
+                .resultado(toApiResultado(source.resultado()));
+    }
+
+    private BetResultResponseDTO.MatchResultEnum toApiMatchResult(Result result) {
+        return result == null ? null : BetResultResponseDTO.MatchResultEnum.fromValue(result.name());
+    }
+
+    private BetResultResponseDTO.BetResultEnum toApiBetResult(Result result) {
+        return result == null ? null : BetResultResponseDTO.BetResultEnum.fromValue(result.name());
+    }
+
+    private BetResultResponseDTO.ResultadoEnum toApiResultado(Result result) {
+        return result == null ? null : BetResultResponseDTO.ResultadoEnum.fromValue(result.name());
     }
 }
