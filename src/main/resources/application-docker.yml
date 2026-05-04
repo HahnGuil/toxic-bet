@@ -38,4 +38,4 @@ logging:
 integration:
   auth:
     base-url: ${AUTH_SERVER_BASE_URL:http://localhost:2300}
-    application-public-id: "88a2c306-25df-442d-9ba1-cb3565edf872"
+    application-public-id: ${APPLICATION_ID}
