@@ -3,6 +3,7 @@ package br.com.hahn.toxicbet.application.controller;
 import br.com.hahn.toxicbet.api.MatchApi;
 import br.com.hahn.toxicbet.application.service.MatchEventPublisherService;
 import br.com.hahn.toxicbet.application.service.MatchService;
+import br.com.hahn.toxicbet.model.CloseMatchRequestDTO;
 import br.com.hahn.toxicbet.model.MatchRequestDTO;
 import br.com.hahn.toxicbet.model.MatchResponseDTO;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,14 @@ public class MatchController extends AbstractController implements MatchApi {
         return openMatches.concatWith(openEventsOnly);
     }
 
+    @GetMapping(value = "/match/in-progress", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<MatchResponseDTO> streamInProgressMatches() {
+        Flux<MatchResponseDTO> inProgressMatches = matchService.findInProgressMatches();
+        Flux<MatchResponseDTO> inProgressEventsOnly = getEventStream()
+                .filter(match -> MatchResponseDTO.ResultEnum.IN_PROGRESS.equals(match.getResult()));
+        return inProgressMatches.concatWith(inProgressEventsOnly);
+    }
+
     @GetMapping(value = "/match/open/by-championship", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<MatchResponseDTO> streamOpenBettingMatchesByChampionship(@RequestParam Long championshipId) {
         Flux<MatchResponseDTO> openMatchesByChampionship = matchService.findOpenMatchesByChampionship(championshipId);
@@ -69,13 +78,10 @@ public class MatchController extends AbstractController implements MatchApi {
                 .then(Mono.just(ResponseEntity.status(HttpStatus.NO_CONTENT).build()));
     }
 
-//
-//    /match/by-championship
-
     @Override
-    public Mono<ResponseEntity<Void>> patchCloseMatch(Long matchId, String result, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> patchCloseMatch(Flux<CloseMatchRequestDTO> closeMatchRequests, ServerWebExchange exchange) {
         return extractUserEmailFromToken(exchange)
-                .flatMap(userEmail -> matchService.closeMatch(matchId, result, userEmail))
+                .flatMap(userEmail -> matchService.closeBatchMatches(closeMatchRequests, userEmail))
                 .then(Mono.just(ResponseEntity.status(HttpStatus.NO_CONTENT).build()));
     }
 

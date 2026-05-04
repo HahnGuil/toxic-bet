@@ -8,7 +8,9 @@ import br.com.hahn.toxicbet.domain.model.Team;
 import br.com.hahn.toxicbet.domain.model.enums.BaseValues;
 import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
 import br.com.hahn.toxicbet.domain.model.enums.Result;
+import br.com.hahn.toxicbet.domain.model.enums.Role;
 import br.com.hahn.toxicbet.domain.repository.MatchRepository;
+import br.com.hahn.toxicbet.model.CloseMatchRequestDTO;
 import br.com.hahn.toxicbet.model.MatchRequestDTO;
 import br.com.hahn.toxicbet.model.MatchResponseDTO;
 import br.com.hahn.toxicbet.util.DateTimeConverter;
@@ -49,6 +51,12 @@ public class MatchService {
     public Flux<MatchResponseDTO> findMatchesOpenToBets(){
         return repository.findAll()
                 .filter(match -> match.getResult() == Result.OPEN_FOR_BETTING)
+                .flatMap(this::buildMatchResponseDTO);
+    }
+
+    public Flux<MatchResponseDTO> findInProgressMatches(){
+        return repository.findAll()
+                .filter(match -> match.getResult() == Result.IN_PROGRESS)
                 .flatMap(this::buildMatchResponseDTO);
     }
 
@@ -94,7 +102,10 @@ public class MatchService {
                 .flatMap(match -> {
                     match.setResult(Result.IN_PROGRESS);
                     log.info("MatchService: Update match: {}, with MatchTime: {}, to IN_PROGRESS at: {}", match.getId(), match.getMatchTime(), DateTimeConverter.formatInstantNow());
-                    return repository.save(match);
+                    return repository.save(match)
+                            .flatMap(this::buildMatchResponseDTO)
+                            .doOnNext(matchEventPublisherService::publishMatchUpdate)
+                            .thenReturn(match);
                 })
                 .count();
     }
@@ -105,6 +116,25 @@ public class MatchService {
                     log.error("MatchService: NOT_FOUND: Not found match for id: {}, throw Not Found Exception at: {}", id, DateTimeConverter.formatInstantNow());
                     return Mono.error(new NotFoundException(ErrorMessages.MATCH_NOT_FOUND.getMessage()));
                 }));
+    }
+
+    public Mono<Void> closeBatchMatches(Flux<CloseMatchRequestDTO> requests, String email) {
+        return validateBatchCloseAdmin(email)
+                .doOnSubscribe(subscription ->
+                        log.info("MatchService: User: {}, is closing matches in batch at: {}", email, DateTimeConverter.formatInstantNow()))
+                .thenMany(requests.flatMap(req -> {
+                    Result finalResult = Result.valueOf(req.getResult().getValue());
+                    return repository.findById(req.getMatchId())
+                            .switchIfEmpty(Mono.error(new NotFoundException(ErrorMessages.MATCH_NOT_FOUND.getMessage())))
+                            .flatMap(match -> {
+                                match.setResult(finalResult);
+                                return repository.save(match)
+                                        .then(userService.calculatedUserPoints(match.getId(), finalResult.name()));
+                            });
+                }))
+                .then()
+                .doOnSuccess(success ->
+                        log.info("MatchService: Batch close matches completed for user: {} at: {}", email, DateTimeConverter.formatInstantNow()));
     }
 
     public Mono<Void> closeMatch(Long matchId, String result, String email){
@@ -150,7 +180,10 @@ public class MatchService {
                         .switchIfEmpty(Mono.error(new NotFoundException(ErrorMessages.MATCH_NOT_OPEN_TO_BETS.getMessage())))
                         .flatMap(match -> {
                             match.setResult(Result.IN_PROGRESS);
-                            return repository.save(match);
+                            return repository.save(match)
+                                    .flatMap(this::buildMatchResponseDTO)
+                                    .doOnNext(matchEventPublisherService::publishMatchUpdate)
+                                    .then();
                         })
                         .then());
     }
@@ -292,4 +325,17 @@ public class MatchService {
         return Mono.just(dto);
     }
 
+    private Mono<Void> validateBatchCloseAdmin(String email) {
+        return userService.findByEmail(email)
+                .flatMap(user -> {
+                    if (!Role.ADMIN.equals(user.getRole())) {
+                        log.error("MatchService: FORBIDDEN: User {} without ADMIN role tried batch close at: {}", email, DateTimeConverter.formatInstantNow());
+                        return Mono.error(new NotAuthorizedException(ErrorMessages.FORBIDDEN_OPERATION.getMessage()));
+                    }
+                    return Mono.empty();
+                })
+                .then();
+    }
+
 }
+
