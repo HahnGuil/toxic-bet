@@ -13,7 +13,7 @@ public class MatchEventPublisherService {
     private final Sinks.Many<MatchResponseDTO> sink;
 
     public MatchEventPublisherService() {
-        this.sink = Sinks.many().multicast().directBestEffort();
+        this.sink = Sinks.many().multicast().onBackpressureBuffer();
     }
 
     public void publishMatchUpdate(MatchResponseDTO match) {

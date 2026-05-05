@@ -17,7 +17,7 @@ public class BetEventPublisherService {
     private final Sinks.Many<UserBetEvent> sink;
 
     public BetEventPublisherService() {
-        this.sink = Sinks.many().multicast().directBestEffort();
+        this.sink = Sinks.many().multicast().onBackpressureBuffer();
     }
 
     public void publishBetPlaced(UUID userId, BetResponseDTO bet) {
@@ -33,4 +33,3 @@ public class BetEventPublisherService {
                 .map(UserBetEvent::bet);
     }
 }
-
