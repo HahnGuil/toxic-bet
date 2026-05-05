@@ -101,6 +101,6 @@ public class MatchController extends AbstractController implements MatchApi {
             Flux<MatchResponseDTO> existingMatches,
             Flux<MatchResponseDTO> eventStream
     ) {
-        return Flux.mergeSequential(existingMatches, eventStream);
+        return Flux.merge(existingMatches, eventStream);
     }
 }
