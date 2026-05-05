@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class BetProcessorService {
 
-    private final Map<Long, Sinks.Many<BetRequest>> matchSinks = new ConcurrentHashMap<>();
+    private final Map<Long, MatchBetQueue> matchQueues = new ConcurrentHashMap<>();
     private final BetExecutorService betExecutorService;
     private final BetProcessingMetrics metrics;
 
@@ -34,7 +34,7 @@ public class BetProcessorService {
         return Mono.create(sink -> {
             BetRequest request = new BetRequest(betRequestDTO, userEmail, sink);
 
-            Sinks.Many<BetRequest> matchSink = matchSinks.computeIfAbsent(matchId, id -> {
+            MatchBetQueue queue = matchQueues.computeIfAbsent(matchId, id -> {
                 log.info("BetProcessorService: Creating new Sink for match {}", id);
                 Sinks.Many<BetRequest> newSink = Sinks.many().unicast().onBackpressureBuffer();
 
@@ -51,10 +51,13 @@ public class BetProcessorService {
                                 () -> log.info("BetProcessorService: Flux completed for match {}", id)
                         );
 
-                return newSink;
+                return new MatchBetQueue(newSink, new Object());
             });
 
-            Sinks.EmitResult result = matchSink.tryEmitNext(request);
+            Sinks.EmitResult result;
+            synchronized (queue.emitLock()) {
+                result = queue.sink().tryEmitNext(request);
+            }
 
             if (result.isFailure()) {
                 log.error("BetProcessorService: Failed to enqueue bet for match {}: {}", matchId, result);
@@ -71,5 +74,9 @@ public class BetProcessorService {
             String userEmail,
             reactor.core.publisher.MonoSink<BetResponseDTO> responseSink
     ) {}
-}
 
+    private record MatchBetQueue(
+            Sinks.Many<BetRequest> sink,
+            Object emitLock
+    ) {}
+}

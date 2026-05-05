@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
 
 import java.time.Duration;
@@ -58,19 +59,20 @@ class BetProcessorServiceLoadTest {
     @Test
     void shouldHandleHighConcurrencyOnSingleMatch() {
         Long matchId = 1L;
-        int numberOfBets = 100;
+        int numberOfBets = 300;
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger errorCount = new AtomicInteger(0);
 
-        // Create 100 concurrent bets on the same match
+        // Create many concurrent bets on the same match from different threads.
         Flux<BetResponseDTO> betFlux = Flux.range(0, numberOfBets)
                 .flatMap(i -> {
                     BetRequestDTO betRequest = createBetRequest(matchId);
                     return betProcessorService.enqueueBet(betRequest, "user" + i + "@test.com")
+                            .subscribeOn(Schedulers.parallel())
                             .doOnSuccess(response -> successCount.incrementAndGet())
                             .doOnError(error -> errorCount.incrementAndGet())
                             .onErrorResume(error -> Mono.empty());
-                }, 10); // 10 concurrent requests at a time
+                }, numberOfBets);
 
         // Verify all bets are processed
         StepVerifier.create(betFlux)
@@ -173,4 +175,3 @@ class BetProcessorServiceLoadTest {
         return response;
     }
 }
-
