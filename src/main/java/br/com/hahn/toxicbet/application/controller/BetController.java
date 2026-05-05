@@ -3,8 +3,6 @@ package br.com.hahn.toxicbet.application.controller;
 import br.com.hahn.toxicbet.api.BetApi;
 import br.com.hahn.toxicbet.application.mapper.BetMapper;
 import br.com.hahn.toxicbet.application.service.BetService;
-import br.com.hahn.toxicbet.application.service.MatchEventPublisherService;
-import br.com.hahn.toxicbet.application.service.MatchService;
 import br.com.hahn.toxicbet.application.service.UserService;
 import br.com.hahn.toxicbet.model.BetRequestDTO;
 import br.com.hahn.toxicbet.model.BetResponseDTO;
@@ -26,8 +24,6 @@ public class BetController extends AbstractController implements BetApi {
 
     private final BetService betService;
     private final BetMapper betMapper;
-    private final MatchService matchService;
-    private final MatchEventPublisherService matchEventPublisherService;
     private final UserService userService;
 
     @Override
@@ -38,12 +34,6 @@ public class BetController extends AbstractController implements BetApi {
                                 .flatMap(betResponse ->
                                         userService.findByEmail(userEmail)
                                                 .doOnNext(user -> betService.publishBetEvent(user.getId(), betResponse))
-                                                .thenReturn(betResponse)
-                                )
-                                .flatMap(betResponse ->
-                                        matchService.findById(betResponse.getMatchId())
-                                                .flatMap(matchService::buildMatchResponseDTO)
-                                                .doOnSuccess(matchEventPublisherService::publishOddsUpdate)
                                                 .thenReturn(betResponse)
                                 )
                 )
@@ -73,4 +63,3 @@ public class BetController extends AbstractController implements BetApi {
         return Mono.just(ResponseEntity.ok(results));
     }
 }
-
