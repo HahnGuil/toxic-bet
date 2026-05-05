@@ -4,7 +4,7 @@
 -- docker compose -f compose.aws.yaml exec -T postgres sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' < scripts/sql/insert_matches_template.sql
 --
 -- The application stores match_time as a timestamp without timezone.
--- Use the local business time expected by the application, format DD/MM/YYYY HH24:MI.
+-- Use Brasilia time (America/Sao_Paulo), format DD/MM/YYYY HH24:MI.
 
 BEGIN;
 
@@ -44,7 +44,7 @@ BEGIN
         OR home_team.id IS NULL
         OR visiting_team.id IS NULL
         OR seed.home_team_name = seed.visiting_team_name
-        OR to_timestamp(seed.match_time, 'DD/MM/YYYY HH24:MI')::timestamp <= now();
+        OR to_timestamp(seed.match_time, 'DD/MM/YYYY HH24:MI')::timestamp <= (now() AT TIME ZONE 'America/Sao_Paulo');
 
     IF invalid_count > 0 THEN
         RAISE EXCEPTION

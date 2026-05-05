@@ -22,6 +22,7 @@ import java.util.Objects;
  */
 public final class DateTimeConverter {
 
+    public static final ZoneId BRASILIA_ZONE = ZoneId.of("America/Sao_Paulo");
     private static final DateTimeFormatter MMAA = DateTimeFormatter.ofPattern("MMyy");
 
     /**
@@ -35,7 +36,7 @@ public final class DateTimeConverter {
         if (Objects.isNull(instant)) {
             return "";
         }
-        ZonedDateTime zdt = instant.atZone(ZoneId.systemDefault());
+        ZonedDateTime zdt = instant.atZone(BRASILIA_ZONE);
         return zdt.format(FORMATTER);
     }
 
@@ -55,6 +56,10 @@ public final class DateTimeConverter {
      */
     public static Mono<String> formatInstantNowReactive() {
         return Mono.fromSupplier(DateTimeConverter::formatInstantNow);
+    }
+
+    public static LocalDateTime nowBrasilia() {
+        return LocalDateTime.now(BRASILIA_ZONE);
     }
 
     /**
@@ -102,7 +107,7 @@ public final class DateTimeConverter {
     }
 
     public static String getMouthAndYear(){
-        return LocalDate.now().format(MMAA);
+        return LocalDate.now(BRASILIA_ZONE).format(MMAA);
     }
 
     private static final DateTimeFormatter FORMATTER =

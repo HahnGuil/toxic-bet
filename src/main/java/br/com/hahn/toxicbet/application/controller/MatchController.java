@@ -48,7 +48,7 @@ public class MatchController extends AbstractController implements MatchApi {
     public Flux<MatchResponseDTO> streamOpenBettingMatches() {
         Flux<MatchResponseDTO> openMatches = matchService.findMatchesOpenToBets();
         Flux<MatchResponseDTO> openEventsOnly = getEventStream()
-                .filter(match -> MatchResponseDTO.ResultEnum.OPEN_FOR_BETTING.equals(match.getResult()));
+                .filter(matchService::isOpenForBettingNow);
         return withLiveEvents(openMatches, openEventsOnly);
     }
 
@@ -66,7 +66,7 @@ public class MatchController extends AbstractController implements MatchApi {
         Flux<MatchResponseDTO> openEventsOnly = getEventStream()
                 .filter(m -> m.getChampionshipId() != null
                         && m.getChampionshipId().equals(championshipId)
-                        && MatchResponseDTO.ResultEnum.OPEN_FOR_BETTING.equals(m.getResult()));
+                        && matchService.isOpenForBettingNow(m));
         return withLiveEvents(openMatchesByChampionship, openEventsOnly);
     }
 

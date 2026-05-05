@@ -62,6 +62,7 @@ public class MatchService {
     public Flux<MatchResponseDTO> findMatchesOpenToBets(){
         return repository.findAll()
                 .filter(match -> match.getResult() == Result.OPEN_FOR_BETTING)
+                .filter(this::isOpenForBettingNow)
                 .flatMap(this::buildMatchResponseDTO);
     }
 
@@ -72,7 +73,7 @@ public class MatchService {
     }
 
     public Mono<Long> autoOpenMatchToBets(){
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = DateTimeConverter.nowBrasilia();
         LocalDateTime openWindowEnd = now.plus(SCHEDULER_LOOKAHEAD);
 
         return repository.findAll()
@@ -83,7 +84,7 @@ public class MatchService {
                 .flatMap(match -> delayUntil(getBettingOpenTime(match))
                         .then(repository.findById(match.getId()))
                         .filter(current -> current.getResult() == Result.NOT_STARTED)
-                        .filter(current -> current.getMatchTime().isAfter(LocalDateTime.now()))
+                        .filter(current -> current.getMatchTime().isAfter(DateTimeConverter.nowBrasilia()))
                         .flatMap(current -> {
                             current.setResult(Result.OPEN_FOR_BETTING);
                             return repository.save(current)
@@ -98,7 +99,7 @@ public class MatchService {
     public Mono<Long> deleteOndMatch() {
         log.info("ApplicationScheduler: Starting to delete old matches at: {}", DateTimeConverter.formatInstantNow());
 
-        LocalDateTime cutoff = LocalDateTime.now().minusDays(2);
+        LocalDateTime cutoff = DateTimeConverter.nowBrasilia().minusDays(2);
 
         return repository.findAll()
                 .filter(match ->
@@ -114,7 +115,7 @@ public class MatchService {
     }
 
     public Mono<Long> updateMatchesToInProgress(){
-        LocalDateTime closeWindowEnd = LocalDateTime.now().plus(SCHEDULER_LOOKAHEAD);
+        LocalDateTime closeWindowEnd = DateTimeConverter.nowBrasilia().plus(SCHEDULER_LOOKAHEAD);
 
         return repository.findAll()
                 .filter(match -> match.getResult() == Result.OPEN_FOR_BETTING)
@@ -141,11 +142,20 @@ public class MatchService {
     }
 
     private Mono<Void> delayUntil(LocalDateTime transitionTime) {
-        Duration delay = Duration.between(LocalDateTime.now(), transitionTime);
+        Duration delay = Duration.between(DateTimeConverter.nowBrasilia(), transitionTime);
         if (!delay.isPositive()) {
             return Mono.empty();
         }
         return Mono.delay(delay).then();
+    }
+
+    public boolean isOpenForBettingNow(MatchResponseDTO match) {
+        if (!MatchResponseDTO.ResultEnum.OPEN_FOR_BETTING.equals(match.getResult())) {
+            return false;
+        }
+
+        var matchTime = DateTimeConverter.parseToLocalDateTime(match.getMatchTime());
+        return matchTime != null && isWithinBettingWindow(matchTime, DateTimeConverter.nowBrasilia());
     }
 
     public Mono<Match> findById(Long id){
@@ -246,6 +256,7 @@ public class MatchService {
                 .filter(match -> match.getChampionshipId() != null
                         && match.getChampionshipId().equals(championshipId))
                 .filter(match -> Result.OPEN_FOR_BETTING.equals(match.getResult()))
+                .filter(this::isOpenForBettingNow)
                 .flatMap(this::buildMatchResponseDTO);
     }
     public Mono<String> getHomeTeamName(Long homeTeamId) {
@@ -326,7 +337,7 @@ public class MatchService {
     private Mono<MatchRequestDTO> isMatchTimeValid(MatchRequestDTO dto) {
         var matchTime = DateTimeConverter.parseToLocalDateTime(dto.getMatchTime());
         assert matchTime != null;
-        if (matchTime.isBefore(LocalDateTime.now())) {
+        if (matchTime.isBefore(DateTimeConverter.nowBrasilia())) {
             log.error("MatchService: UNPROCESSABLE_ENTITY: Invalid match time, throw InvalidMatchTimeException at: {}", DateTimeConverter.formatInstantNow());
             return Mono.error(new BusinessException(ErrorMessages.INVALID_MATCH_TIME.getMessage()));
         }
@@ -375,6 +386,15 @@ public class MatchService {
     private boolean isInTimeWindow(LocalDateTime matchTime, LocalDateTime startWindow, LocalDateTime endWindow) {
         return (matchTime.isAfter(startWindow) || matchTime.isEqual(startWindow))
                 && (matchTime.isBefore(endWindow) || matchTime.isEqual(endWindow));
+    }
+
+    private boolean isOpenForBettingNow(Match match) {
+        return isWithinBettingWindow(match.getMatchTime(), DateTimeConverter.nowBrasilia());
+    }
+
+    private boolean isWithinBettingWindow(LocalDateTime matchTime, LocalDateTime now) {
+        LocalDateTime openTime = matchTime.minus(BETTING_OPEN_BEFORE_MATCH);
+        return !now.isBefore(openTime) && now.isBefore(matchTime);
     }
 
     private Mono<MatchRequestDTO> handleConflictResult(boolean hasConflict, MatchRequestDTO dto) {
