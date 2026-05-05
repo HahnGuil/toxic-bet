@@ -11,6 +11,7 @@ import reactor.core.publisher.Sinks;
 public class MatchEventPublisherService {
 
     private final Sinks.Many<MatchResponseDTO> sink;
+    private final Object emitLock = new Object();
 
     public MatchEventPublisherService() {
         this.sink = Sinks.many().multicast().onBackpressureBuffer();
@@ -18,7 +19,10 @@ public class MatchEventPublisherService {
 
     public void publishMatchUpdate(MatchResponseDTO match) {
 
-        Sinks.EmitResult result = sink.tryEmitNext(match);
+        Sinks.EmitResult result;
+        synchronized (emitLock) {
+            result = sink.tryEmitNext(match);
+        }
 
         if (result.isFailure()) {
             log.warn("Falha ao emitir evento de partida: {}", result);

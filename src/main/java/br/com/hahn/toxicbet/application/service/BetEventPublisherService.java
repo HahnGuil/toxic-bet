@@ -15,13 +15,17 @@ public class BetEventPublisherService {
     public record UserBetEvent(UUID userId, BetResponseDTO bet) {}
 
     private final Sinks.Many<UserBetEvent> sink;
+    private final Object emitLock = new Object();
 
     public BetEventPublisherService() {
         this.sink = Sinks.many().multicast().onBackpressureBuffer();
     }
 
     public void publishBetPlaced(UUID userId, BetResponseDTO bet) {
-        Sinks.EmitResult result = sink.tryEmitNext(new UserBetEvent(userId, bet));
+        Sinks.EmitResult result;
+        synchronized (emitLock) {
+            result = sink.tryEmitNext(new UserBetEvent(userId, bet));
+        }
         if (result.isFailure()) {
             log.warn("BetEventPublisherService: Failed to emit bet event for user {}: {}", userId, result);
         }
