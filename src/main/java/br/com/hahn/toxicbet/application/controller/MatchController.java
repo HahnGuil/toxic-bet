@@ -13,8 +13,14 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @RestController
 @RequiredArgsConstructor
@@ -101,6 +107,38 @@ public class MatchController extends AbstractController implements MatchApi {
             Flux<MatchResponseDTO> existingMatches,
             Flux<MatchResponseDTO> eventStream
     ) {
-        return Flux.merge(existingMatches, eventStream);
+        return Flux.create(sink -> {
+            Queue<MatchResponseDTO> eventsDuringSnapshot = new ConcurrentLinkedQueue<>();
+            AtomicBoolean snapshotCompleted = new AtomicBoolean(false);
+
+            Disposable liveSubscription = eventStream.subscribe(
+                    event -> {
+                        if (snapshotCompleted.get()) {
+                            sink.next(event);
+                        } else {
+                            eventsDuringSnapshot.add(event);
+                        }
+                    },
+                    sink::error
+            );
+
+            Disposable snapshotSubscription = existingMatches.subscribe(
+                    sink::next,
+                    sink::error,
+                    () -> {
+                        snapshotCompleted.set(true);
+                        MatchResponseDTO event;
+                        while (!sink.isCancelled() && (event = eventsDuringSnapshot.poll()) != null) {
+                            sink.next(event);
+                        }
+                    }
+            );
+
+            sink.onDispose(() -> {
+                snapshotSubscription.dispose();
+                liveSubscription.dispose();
+                eventsDuringSnapshot.clear();
+            });
+        }, FluxSink.OverflowStrategy.BUFFER);
     }
 }
