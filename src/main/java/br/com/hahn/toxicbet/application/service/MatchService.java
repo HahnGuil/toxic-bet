@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,6 +29,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @RequiredArgsConstructor
 public class MatchService {
+
+    private static final Duration BETTING_OPEN_BEFORE_MATCH = Duration.ofHours(2);
+    private static final Duration SCHEDULER_LOOKAHEAD = Duration.ofMinutes(30);
 
     private final TeamService teamService;
     private final MatchRepository repository;
@@ -66,11 +70,14 @@ public class MatchService {
 
     public Mono<Long> autoOpenMatchToBets(){
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime limit = now.plusHours(3);
+        LocalDateTime openWindowEnd = now
+                .plus(BETTING_OPEN_BEFORE_MATCH)
+                .plus(SCHEDULER_LOOKAHEAD);
 
         return repository.findAll()
                 .filter(match -> match.getResult() == Result.NOT_STARTED)
-                .filter(match -> !match.getMatchTime().isBefore(now) && !match.getMatchTime().isAfter(limit))
+                .filter(match -> match.getMatchTime().isAfter(now))
+                .filter(match -> !match.getMatchTime().isAfter(openWindowEnd))
                 .flatMap(match -> {
                     match.setResult(Result.OPEN_FOR_BETTING);
                     return repository.save(match)
@@ -99,9 +106,11 @@ public class MatchService {
     }
 
     public Mono<Long> updateMatchesToInProgress(){
+        LocalDateTime closeWindowEnd = LocalDateTime.now().plus(SCHEDULER_LOOKAHEAD);
+
         return repository.findAll()
                 .filter(match -> match.getResult() == Result.OPEN_FOR_BETTING)
-                .filter(match -> match.getMatchTime().isBefore(LocalDateTime.now()))
+                .filter(match -> !match.getMatchTime().isAfter(closeWindowEnd))
                 .doOnSubscribe(subscription -> log.info("MatchService: Update matches result to In Progress"))
                 .flatMap(match -> {
                     match.setResult(Result.IN_PROGRESS);
