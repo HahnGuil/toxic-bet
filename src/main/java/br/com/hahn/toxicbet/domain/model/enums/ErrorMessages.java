@@ -23,6 +23,7 @@ public enum ErrorMessages {
     USER_NOT_FOUND("User not found!"),
     CHAMPIONSHIP_NOT_FOUND("Championship not found"),
     MATCH_NOT_OPEN_TO_BETS("This match is not eligible for betting."),
+    BET_ALREADY_PLACED("The user has already placed a bet for this match."),
     BETTING_POOL_NOT_FOUND_KEY("Not found Betting Pool for the given key"),
     TEAM_ALREADY_EXISTS("There is already a registered team with the name: "),
     NO_TEAM_NAME("Team name is required."),
