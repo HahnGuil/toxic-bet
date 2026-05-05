@@ -18,14 +18,21 @@ public class MatchEventPublisherService {
     }
 
     public void publishMatchUpdate(MatchResponseDTO match) {
+        int subscribers = sink.currentSubscriberCount();
 
         Sinks.EmitResult result;
         synchronized (emitLock) {
             result = sink.tryEmitNext(match);
         }
 
+        if (subscribers == 0) {
+            log.error("MatchEventPublisherService: No subscribers for match event {}. emitResult={}",
+                    match.getMatchId(), result);
+        }
+
         if (result.isFailure()) {
-            log.warn("Falha ao emitir evento de partida: {}", result);
+            log.error("MatchEventPublisherService: Failed to emit match event {}. subscribers={}, result={}",
+                    match.getMatchId(), subscribers, result);
         }
     }
 
