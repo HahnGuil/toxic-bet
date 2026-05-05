@@ -21,6 +21,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Slf4j
@@ -33,6 +35,8 @@ public class MatchService {
     private final ChampionshipService championshipService;
     private final UserService userService;
     private final MatchEventPublisherService matchEventPublisherService;
+    private final Map<Long, String> teamNameCache = new ConcurrentHashMap<>();
+    private final Map<Long, String> championshipNameCache = new ConcurrentHashMap<>();
 
 
     public Mono<MatchResponseDTO> createMatchDto(Mono<MatchRequestDTO> matchRequestDTOMono, String userEmail) {
@@ -190,10 +194,10 @@ public class MatchService {
 
     public Mono<MatchResponseDTO> buildMatchResponseDTO(Match match) {
         return Mono.zip(
-                teamService.findById(match.getHomeTeamId()),
-                teamService.findById(match.getVisitingTeamId()),
-                championshipService.findById(match.getChampionshipId())
-        ).map(matchResponse -> mapper.toDto(match, matchResponse.getT1().getName(), matchResponse.getT2().getName(), matchResponse.getT3().getName()));
+                getTeamName(match.getHomeTeamId()),
+                getTeamName(match.getVisitingTeamId()),
+                getChampionshipName(match.getChampionshipId())
+        ).map(matchResponse -> mapper.toDto(match, matchResponse.getT1(), matchResponse.getT2(), matchResponse.getT3()));
     }
 
     public Flux<MatchResponseDTO> findMatchByChampionship(Long championshipId) {
@@ -211,11 +215,33 @@ public class MatchService {
                 .flatMap(this::buildMatchResponseDTO);
     }
     public Mono<String> getHomeTeamName(Long homeTeamId) {
-        return teamService.findById(homeTeamId).map(team -> team.getName());
+        return getTeamName(homeTeamId);
     }
 
     public Mono<String> getVisitingTeamName(Long visitingTeamId) {
-        return teamService.findById(visitingTeamId).map(team -> team.getName());
+        return getTeamName(visitingTeamId);
+    }
+
+    private Mono<String> getTeamName(Long teamId) {
+        String cached = teamNameCache.get(teamId);
+        if (cached != null) {
+            return Mono.just(cached);
+        }
+
+        return teamService.findById(teamId)
+                .map(Team::getName)
+                .doOnNext(name -> teamNameCache.put(teamId, name));
+    }
+
+    private Mono<String> getChampionshipName(Long championshipId) {
+        String cached = championshipNameCache.get(championshipId);
+        if (cached != null) {
+            return Mono.just(cached);
+        }
+
+        return championshipService.findById(championshipId)
+                .map(Championship::getName)
+                .doOnNext(name -> championshipNameCache.put(championshipId, name));
     }
 
 //    -----
@@ -338,4 +364,3 @@ public class MatchService {
     }
 
 }
-
