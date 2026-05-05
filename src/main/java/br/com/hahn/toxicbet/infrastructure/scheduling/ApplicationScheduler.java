@@ -15,7 +15,7 @@ public class ApplicationScheduler {
     private final MatchService matchService;
 
 
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "10 0/30 * * * *")
     public void updateMatchesToInProgress(){
         log.info("ApplicationScheduler: Staring updating matches to IN_PROGRESS");
         matchService.updateMatchesToInProgress()
@@ -24,7 +24,7 @@ public class ApplicationScheduler {
                         error -> log.error(ERROR_SCHEDULER + ": {}", error.getMessage()));
     }
 
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 0/30 * * * *")
     public void updateMatchesToOpenToBetting(){
         log.info("ApplicationScheduler: Starting updating matches to OPEN_TO_BETTING");
         matchService.autoOpenMatchToBets()

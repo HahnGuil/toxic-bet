@@ -32,8 +32,10 @@ server:
 
 logging:
   level:
-    org.springframework.security: INFO
-    br.com.hahn.toxicbet: INFO
+    root: ERROR
+    reactor.netty.http.client: ERROR
+    org.springframework.security: ERROR
+    br.com.hahn.toxicbet: ERROR
 
 integration:
   auth:
