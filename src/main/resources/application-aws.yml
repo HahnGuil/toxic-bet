@@ -40,5 +40,4 @@ logging:
 integration:
   auth:
     base-url: https://auth.toxicbet.com.br
-    application-public-id: ""
-
+    application-public-id: ${APPLICATION_ID}
