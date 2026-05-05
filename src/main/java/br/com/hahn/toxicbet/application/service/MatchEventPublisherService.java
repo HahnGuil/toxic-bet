@@ -10,24 +10,24 @@ import reactor.core.publisher.Sinks;
 @Slf4j
 public class MatchEventPublisherService {
 
+    private static final int EVENT_BUFFER_SIZE = 1024;
+
     private final Sinks.Many<MatchResponseDTO> sink;
     private final Object emitLock = new Object();
 
     public MatchEventPublisherService() {
-        this.sink = Sinks.many().multicast().onBackpressureBuffer();
+        this.sink = Sinks.many().multicast().onBackpressureBuffer(EVENT_BUFFER_SIZE, false);
     }
 
     public void publishMatchUpdate(MatchResponseDTO match) {
         int subscribers = sink.currentSubscriberCount();
+        if (subscribers == 0) {
+            return;
+        }
 
         Sinks.EmitResult result;
         synchronized (emitLock) {
             result = sink.tryEmitNext(match);
-        }
-
-        if (subscribers == 0) {
-            log.error("MatchEventPublisherService: No subscribers for match event {}. emitResult={}",
-                    match.getMatchId(), result);
         }
 
         if (result.isFailure()) {

@@ -14,14 +14,20 @@ public class BetEventPublisherService {
 
     public record UserBetEvent(UUID userId, BetResponseDTO bet) {}
 
+    private static final int EVENT_BUFFER_SIZE = 1024;
+
     private final Sinks.Many<UserBetEvent> sink;
     private final Object emitLock = new Object();
 
     public BetEventPublisherService() {
-        this.sink = Sinks.many().multicast().onBackpressureBuffer();
+        this.sink = Sinks.many().multicast().onBackpressureBuffer(EVENT_BUFFER_SIZE, false);
     }
 
     public void publishBetPlaced(UUID userId, BetResponseDTO bet) {
+        if (sink.currentSubscriberCount() == 0) {
+            return;
+        }
+
         Sinks.EmitResult result;
         synchronized (emitLock) {
             result = sink.tryEmitNext(new UserBetEvent(userId, bet));
