@@ -23,6 +23,7 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -41,6 +42,8 @@ public class MatchService {
     private final MatchEventPublisherService matchEventPublisherService;
     private final Map<Long, String> teamNameCache = new ConcurrentHashMap<>();
     private final Map<Long, String> championshipNameCache = new ConcurrentHashMap<>();
+    private final Set<Long> pendingOpenTransitions = ConcurrentHashMap.newKeySet();
+    private final Set<Long> pendingInProgressTransitions = ConcurrentHashMap.newKeySet();
 
 
     public Mono<MatchResponseDTO> createMatchDto(Mono<MatchRequestDTO> matchRequestDTOMono, String userEmail) {
@@ -70,21 +73,26 @@ public class MatchService {
 
     public Mono<Long> autoOpenMatchToBets(){
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime openWindowEnd = now
-                .plus(BETTING_OPEN_BEFORE_MATCH)
-                .plus(SCHEDULER_LOOKAHEAD);
+        LocalDateTime openWindowEnd = now.plus(SCHEDULER_LOOKAHEAD);
 
         return repository.findAll()
                 .filter(match -> match.getResult() == Result.NOT_STARTED)
                 .filter(match -> match.getMatchTime().isAfter(now))
-                .filter(match -> !match.getMatchTime().isAfter(openWindowEnd))
-                .flatMap(match -> {
-                    match.setResult(Result.OPEN_FOR_BETTING);
-                    return repository.save(match)
-                            .flatMap(this::buildMatchResponseDTO)
-                            .doOnNext(matchEventPublisherService::publishMatchUpdate)
-                            .thenReturn(match);
-                }).count();
+                .filter(match -> !getBettingOpenTime(match).isAfter(openWindowEnd))
+                .filter(match -> pendingOpenTransitions.add(match.getId()))
+                .flatMap(match -> delayUntil(getBettingOpenTime(match))
+                        .then(repository.findById(match.getId()))
+                        .filter(current -> current.getResult() == Result.NOT_STARTED)
+                        .filter(current -> current.getMatchTime().isAfter(LocalDateTime.now()))
+                        .flatMap(current -> {
+                            current.setResult(Result.OPEN_FOR_BETTING);
+                            return repository.save(current)
+                                    .flatMap(this::buildMatchResponseDTO)
+                                    .doOnNext(matchEventPublisherService::publishMatchUpdate)
+                                    .thenReturn(current);
+                        })
+                        .doFinally(signal -> pendingOpenTransitions.remove(match.getId())))
+                .count();
     }
 
     public Mono<Long> deleteOndMatch() {
@@ -111,16 +119,33 @@ public class MatchService {
         return repository.findAll()
                 .filter(match -> match.getResult() == Result.OPEN_FOR_BETTING)
                 .filter(match -> !match.getMatchTime().isAfter(closeWindowEnd))
+                .filter(match -> pendingInProgressTransitions.add(match.getId()))
                 .doOnSubscribe(subscription -> log.info("MatchService: Update matches result to In Progress"))
-                .flatMap(match -> {
-                    match.setResult(Result.IN_PROGRESS);
-                    log.info("MatchService: Update match: {}, with MatchTime: {}, to IN_PROGRESS at: {}", match.getId(), match.getMatchTime(), DateTimeConverter.formatInstantNow());
-                    return repository.save(match)
-                            .flatMap(this::buildMatchResponseDTO)
-                            .doOnNext(matchEventPublisherService::publishMatchUpdate)
-                            .thenReturn(match);
-                })
+                .flatMap(match -> delayUntil(match.getMatchTime())
+                        .then(repository.findById(match.getId()))
+                        .filter(current -> current.getResult() == Result.OPEN_FOR_BETTING)
+                        .flatMap(current -> {
+                            current.setResult(Result.IN_PROGRESS);
+                            log.info("MatchService: Update match: {}, with MatchTime: {}, to IN_PROGRESS at: {}", current.getId(), current.getMatchTime(), DateTimeConverter.formatInstantNow());
+                            return repository.save(current)
+                                    .flatMap(this::buildMatchResponseDTO)
+                                    .doOnNext(matchEventPublisherService::publishMatchUpdate)
+                                    .thenReturn(current);
+                        })
+                        .doFinally(signal -> pendingInProgressTransitions.remove(match.getId())))
                 .count();
+    }
+
+    private LocalDateTime getBettingOpenTime(Match match) {
+        return match.getMatchTime().minus(BETTING_OPEN_BEFORE_MATCH);
+    }
+
+    private Mono<Void> delayUntil(LocalDateTime transitionTime) {
+        Duration delay = Duration.between(LocalDateTime.now(), transitionTime);
+        if (!delay.isPositive()) {
+            return Mono.empty();
+        }
+        return Mono.delay(delay).then();
     }
 
     public Mono<Match> findById(Long id){
