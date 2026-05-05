@@ -35,7 +35,7 @@ public class MatchController extends AbstractController implements MatchApi {
     public Flux<MatchResponseDTO> streamAllMatches() {
         Flux<MatchResponseDTO> existingMatches = matchService.findAll();
         Flux<MatchResponseDTO> eventStream = getEventStream();
-        return existingMatches.concatWith(eventStream);
+        return withLiveEvents(existingMatches, eventStream);
     }
 
     @GetMapping(value = "/match/find-open", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -43,7 +43,7 @@ public class MatchController extends AbstractController implements MatchApi {
         Flux<MatchResponseDTO> openMatches = matchService.findMatchesOpenToBets();
         Flux<MatchResponseDTO> openEventsOnly = getEventStream()
                 .filter(match -> MatchResponseDTO.ResultEnum.OPEN_FOR_BETTING.equals(match.getResult()));
-        return openMatches.concatWith(openEventsOnly);
+        return withLiveEvents(openMatches, openEventsOnly);
     }
 
     @GetMapping(value = "/match/in-progress", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -51,7 +51,7 @@ public class MatchController extends AbstractController implements MatchApi {
         Flux<MatchResponseDTO> inProgressMatches = matchService.findInProgressMatches();
         Flux<MatchResponseDTO> inProgressEventsOnly = getEventStream()
                 .filter(match -> MatchResponseDTO.ResultEnum.IN_PROGRESS.equals(match.getResult()));
-        return inProgressMatches.concatWith(inProgressEventsOnly);
+        return withLiveEvents(inProgressMatches, inProgressEventsOnly);
     }
 
     @GetMapping(value = "/match/open/by-championship", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -61,14 +61,15 @@ public class MatchController extends AbstractController implements MatchApi {
                 .filter(m -> m.getChampionshipId() != null
                         && m.getChampionshipId().equals(championshipId)
                         && MatchResponseDTO.ResultEnum.OPEN_FOR_BETTING.equals(m.getResult()));
-        return openMatchesByChampionship.concatWith(openEventsOnly);
+        return withLiveEvents(openMatchesByChampionship, openEventsOnly);
     }
 
     @GetMapping(value = "/match/by-championship", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<MatchResponseDTO> streamMatchesByChampionship(@RequestParam Long championshipId) {
         Flux<MatchResponseDTO> matchesByChampionship = matchService.findMatchByChampionship(championshipId);
-        Flux<MatchResponseDTO> matchsByChampionship = getEventStream();
-        return matchesByChampionship.concatWith(matchsByChampionship);
+        Flux<MatchResponseDTO> matchesEventsByChampionship = getEventStream()
+                .filter(m -> m.getChampionshipId() != null && m.getChampionshipId().equals(championshipId));
+        return withLiveEvents(matchesByChampionship, matchesEventsByChampionship);
     }
 
     @Override
@@ -94,5 +95,12 @@ public class MatchController extends AbstractController implements MatchApi {
 
     private Flux<MatchResponseDTO> getEventStream(){
         return matchEventPublisherService.getAllEventsStream();
+    }
+
+    private Flux<MatchResponseDTO> withLiveEvents(
+            Flux<MatchResponseDTO> existingMatches,
+            Flux<MatchResponseDTO> eventStream
+    ) {
+        return Flux.mergeSequential(existingMatches, eventStream);
     }
 }
