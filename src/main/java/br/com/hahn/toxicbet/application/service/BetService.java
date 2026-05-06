@@ -72,6 +72,9 @@ public class BetService {
                                 tuple.getT3().getResult(),
                                 tuple.getT4().getResult(),
                                 tuple.getT4().getBetOdds(),
+                                tuple.getT4().getUserPoint(),
+                                tuple.getT3().getHomeTeamScore(),
+                                tuple.getT3().getVisitingTeamScore(),
                                 tuple.getT3().getResult()
                         ))
                 );
@@ -96,6 +99,9 @@ public class BetService {
                                 tuple.getT3().getResult(),
                                 tuple.getT4().getResult(),
                                 tuple.getT4().getBetOdds(),
+                                tuple.getT4().getUserPoint(),
+                                tuple.getT3().getHomeTeamScore(),
+                                tuple.getT3().getVisitingTeamScore(),
                                 tuple.getT3().getResult()
                         ))
                 );

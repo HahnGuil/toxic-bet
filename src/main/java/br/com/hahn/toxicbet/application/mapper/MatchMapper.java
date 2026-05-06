@@ -33,6 +33,8 @@ public class MatchMapper {
         dto.setHomeTeamOdds(match.getOddsHomeTeam());
         dto.setVisitingTeamOdds(match.getOddsVisitingTeam());
         dto.setDrawTeamOdds(match.getOddsDraw());
+        dto.setHomeTeamScore(match.getHomeTeamScore());
+        dto.setVisitingTeamScore(match.getVisitingTeamScore());
         return dto;
     }
 }

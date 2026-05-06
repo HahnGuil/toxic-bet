@@ -8,6 +8,8 @@ public record BetResultResponseDTO(
         Result matchResult,
         Result betResult,
         Double betOdds,
+        Double betPoints,
+        Integer homeTeamScore,
+        Integer visitingTeamScore,
         Result resultado
 ) {}
-

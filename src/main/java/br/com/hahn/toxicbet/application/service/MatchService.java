@@ -172,10 +172,13 @@ public class MatchService {
                         log.info("MatchService: User: {}, is closing matches in batch at: {}", email, DateTimeConverter.formatInstantNow()))
                 .thenMany(requests.flatMap(req -> {
                     Result finalResult = Result.valueOf(req.getResult().getValue());
+                    validateFinalScore(finalResult, req.getHomeTeamScore(), req.getVisitingTeamScore());
                     return repository.findById(req.getMatchId())
                             .switchIfEmpty(Mono.error(new NotFoundException(ErrorMessages.MATCH_NOT_FOUND.getMessage())))
                             .flatMap(match -> {
                                 match.setResult(finalResult);
+                                match.setHomeTeamScore(req.getHomeTeamScore());
+                                match.setVisitingTeamScore(req.getVisitingTeamScore());
                                 return repository.save(match)
                                         .then(userService.calculatedUserPoints(match.getId(), finalResult.name()));
                             });
@@ -183,6 +186,25 @@ public class MatchService {
                 .then()
                 .doOnSuccess(success ->
                         log.info("MatchService: Batch close matches completed for user: {} at: {}", email, DateTimeConverter.formatInstantNow()));
+    }
+
+    private void validateFinalScore(Result finalResult, Integer homeTeamScore, Integer visitingTeamScore) {
+        if (homeTeamScore == null || visitingTeamScore == null || homeTeamScore < 0 || visitingTeamScore < 0) {
+            throw new BusinessException("Match score must be provided with non-negative values.");
+        }
+
+        Result scoreResult;
+        if (homeTeamScore > visitingTeamScore) {
+            scoreResult = Result.HOME_WIN;
+        } else if (homeTeamScore < visitingTeamScore) {
+            scoreResult = Result.VISITING_WIN;
+        } else {
+            scoreResult = Result.DRAW;
+        }
+
+        if (scoreResult != finalResult) {
+            throw new BusinessException("Match score does not match the selected result.");
+        }
     }
 
     public Mono<Void> closeMatch(Long matchId, String result, String email){

@@ -39,6 +39,9 @@ public class BetMapper {
                 .matchResult(toApiMatchResult(source.matchResult()))
                 .betResult(toApiBetResult(source.betResult()))
                 .betOdds(source.betOdds())
+                .betPoints(source.betPoints())
+                .homeTeamScore(source.homeTeamScore())
+                .visitingTeamScore(source.visitingTeamScore())
                 .resultado(toApiResultado(source.resultado()));
     }
 

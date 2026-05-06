@@ -410,8 +410,12 @@ paths:
             example:
               - matchId: 1
                 result: "HOME_WIN"
+                homeTeamScore: 2
+                visitingTeamScore: 1
               - matchId: 2
                 result: "DRAW"
+                homeTeamScore: 1
+                visitingTeamScore: 1
       responses:
         '204':
           description: Matches closed successfully
@@ -1411,11 +1415,23 @@ components:
           format: double
           description: Odds for home team
           example: "2.5"
+        homeTeamScore:
+          type: integer
+          minimum: 0
+          description: Score of the home team
+          example: 2
+        visitingTeamScore:
+          type: integer
+          minimum: 0
+          description: Score of the visiting team
+          example: 1
     CloseMatchRequestDTO:
       type: object
       required:
         - matchId
         - result
+        - homeTeamScore
+        - visitingTeamScore
       properties:
         matchId:
           type: integer
@@ -1427,6 +1443,16 @@ components:
           enum: [ HOME_WIN, DRAW, VISITING_WIN ]
           description: Final result of the match
           example: "HOME_WIN"
+        homeTeamScore:
+          type: integer
+          minimum: 0
+          description: Score of the home team
+          example: 2
+        visitingTeamScore:
+          type: integer
+          minimum: 0
+          description: Score of the visiting team
+          example: 1
     EndedMatchRequestDTO:
       type: object
       required:
@@ -1543,6 +1569,21 @@ components:
           format: double
           description: Odds associated with the bet
           example: 2.45
+        betPoints:
+          type: number
+          format: double
+          description: Points associated with the bet
+          example: 7.7
+        homeTeamScore:
+          type: integer
+          minimum: 0
+          description: Score of the home team
+          example: 2
+        visitingTeamScore:
+          type: integer
+          minimum: 0
+          description: Score of the visiting team
+          example: 1
         resultado:
           type: string
           enum: [ HOME_WIN, VISITING_WIN, DRAW, NOT_STARTED, IN_PROGRESS, OPEN_FOR_BETTING ]
