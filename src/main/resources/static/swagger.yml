@@ -1000,6 +1000,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDTO'
+    delete:
+      tags:
+        - betting_pool
+      summary: Operation to remove authenticated user from the betting pool.
+      description: The authenticated user uses this endpoint to leave a betting pool where they participate.
+      operationId: deleteUserFromBettingPool
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: bettingPoolKey
+          in: path
+          required: true
+          description: Unique code of the betting pool
+          schema:
+            type: string
+            example: "A23BC45DE"
+      responses:
+        '200':
+          description: User removed from BettingPool
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponseDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
+        '404':
+          description: Betting pool not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDTO'
 
   /bettingPool/getUsers:
     get:

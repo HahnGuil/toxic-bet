@@ -36,6 +36,12 @@ public class BettingPoolController extends AbstractController implements Betting
     }
 
     @Override
+    public Mono<ResponseEntity<SuccessResponseDTO>> deleteUserFromBettingPool(String bettingPoolKey, ServerWebExchange exchange) {
+        return bettingPoolService.removeUserFromBettingPool(bettingPoolKey, extractUserEmailFromToken(exchange))
+                .map(successResponseDTO -> ResponseEntity.status(HttpStatus.OK).body(successResponseDTO));
+    }
+
+    @Override
     public Mono<ResponseEntity<BettingPoolResponseDTO>> postBettingPool(Mono<BettingPoolRequestDTO> bettingPoolRequestDTO, ServerWebExchange exchange) {
         return bettingPoolService.createBettingPool(bettingPoolRequestDTO, extractUserEmailFromToken(exchange))
                 .map(bettingPoolResponseDTO -> ResponseEntity.status(HttpStatus.CREATED).body(bettingPoolResponseDTO));

@@ -81,6 +81,26 @@ public class BettingPoolService {
                 });
     }
 
+    public Mono<SuccessResponseDTO> removeUserFromBettingPool(String bettingPoolKey, Mono<String> userEmailMono){
+        return findByBettingPoolKey(bettingPoolKey)
+                .zipWith(findUserIdByEmail(userEmailMono))
+                .doOnSubscribe(subscription ->
+                        log.info("BettingPoolService: Remove user from bettingPool with code: {}", bettingPoolKey))
+                .flatMap(tuple -> {
+                    var bettingPool = tuple.getT1();
+                    var userId = tuple.getT2().toString();
+
+                    List<String> users = new ArrayList<>(Optional.ofNullable(bettingPool.getUserIds()).orElseGet(ArrayList::new));
+                    users.removeIf(userId::equals);
+                    bettingPool.setUserIds(users);
+
+                    return bettingPoolRepository.save(bettingPool)
+                            .thenReturn(new SuccessResponseDTO().message(
+                                    "User removed successfully from Betting Pool: " + bettingPool.getBettingPoolName()))
+                            .doOnError(error -> log.error("BettingPoolService: Error while removing user from bettingPool: {}", error.getMessage(), error));
+                });
+    }
+
     private Mono<UUID> findUserIdByEmail(Mono<String> userEmailMono) {
         return userEmailMono.flatMap(userService::findUserByEmail);
     }
