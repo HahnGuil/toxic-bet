@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -21,6 +22,13 @@ import java.util.UUID;
 public class UserController extends AbstractController implements UsersApi {
 
     private final UserService userService;
+
+    @GetMapping("/users/me")
+    public Mono<ResponseEntity<UserResponseDTO>> getAuthenticatedUser(ServerWebExchange exchange) {
+        return extractUserEmailFromToken(exchange)
+                .flatMap(userEmail -> userService.getUser(new UserDTO(null, userEmail)))
+                .map(userResponseDTO -> ResponseEntity.status(HttpStatus.OK).body(userResponseDTO));
+    }
 
     public Mono<ResponseEntity<Void>> postRegisterUser(Mono<String> userName, ServerWebExchange exchange) {
         String authorizationHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
