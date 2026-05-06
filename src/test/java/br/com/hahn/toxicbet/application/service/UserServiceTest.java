@@ -11,7 +11,6 @@ import br.com.hahn.toxicbet.domain.repository.UserRepository;
 import br.com.hahn.toxicbet.model.UserResponseDTO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -21,8 +20,7 @@ import reactor.test.StepVerifier;
 
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -99,20 +97,14 @@ class UserServiceTest {
         drawBet.setResult(Result.DRAW);
         drawBet.setUserPoint(9.0);
 
-        Users user = new Users();
-        user.setId(userId);
-        user.setUserPoints(null);
-
         when(betRepository.findByMatchId(matchId)).thenReturn(Flux.just(winBet, drawBet));
-        when(userRepository.findById(userId)).thenReturn(Mono.just(user));
-        when(userRepository.save(any(Users.class))).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+        when(userRepository.incrementUserPoints(userId, 3.5)).thenReturn(Mono.just(1));
 
         StepVerifier.create(service.calculatedUserPoints(matchId, Result.HOME_WIN.name()))
                 .verifyComplete();
 
-        ArgumentCaptor<Users> captor = ArgumentCaptor.forClass(Users.class);
-        verify(userRepository).save(captor.capture());
-        assertEquals(3.5, captor.getValue().getUserPoints());
+        verify(userRepository).incrementUserPoints(userId, 3.5);
+        verify(userRepository, never()).incrementUserPoints(drawBet.getUserId(), 9.0);
     }
 
     @Test
@@ -162,4 +154,3 @@ class UserServiceTest {
                 .verifyComplete();
     }
 }
-

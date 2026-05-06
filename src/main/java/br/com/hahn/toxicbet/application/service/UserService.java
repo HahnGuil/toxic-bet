@@ -47,12 +47,8 @@ public class UserService {
     public Mono<Void> calculatedUserPoints(Long matchId, String result){
         return betRepository.findByMatchId(matchId)
                 .filter(bet -> result.equals(bet.getResult().name()))
-                .flatMap(bet -> userRepository.findById(bet.getUserId())
-                        .flatMap(users -> {
-                            users.setUserPoints((users.getUserPoints() != null ? users.getUserPoints() : 0.0) + bet.getUserPoint());
-                            return userRepository.save(users);
-                        })
-                ).then();
+                .flatMap(bet -> userRepository.incrementUserPoints(bet.getUserId(), bet.getUserPoint()))
+                .then();
     }
 
     public Mono<Users> findById(UUID userId){
