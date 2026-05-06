@@ -31,7 +31,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class MatchService {
 
-    private static final Duration BETTING_OPEN_BEFORE_MATCH = Duration.ofHours(2);
     private static final Duration SCHEDULER_LOOKAHEAD = Duration.ofMinutes(30);
 
     private final TeamService teamService;
@@ -74,15 +73,16 @@ public class MatchService {
 
     public Mono<Long> autoOpenMatchToBets(){
         LocalDateTime now = DateTimeConverter.nowBrasilia();
-        LocalDateTime openWindowEnd = now.plus(SCHEDULER_LOOKAHEAD);
+        LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
+        LocalDateTime startOfNextDay = startOfDay.plusDays(1);
 
         return repository.findAll()
                 .filter(match -> match.getResult() == Result.NOT_STARTED)
+                .filter(match -> !match.getMatchTime().isBefore(startOfDay))
+                .filter(match -> match.getMatchTime().isBefore(startOfNextDay))
                 .filter(match -> match.getMatchTime().isAfter(now))
-                .filter(match -> !getBettingOpenTime(match).isAfter(openWindowEnd))
                 .filter(match -> pendingOpenTransitions.add(match.getId()))
-                .flatMap(match -> delayUntil(getBettingOpenTime(match))
-                        .then(repository.findById(match.getId()))
+                .flatMap(match -> repository.findById(match.getId())
                         .filter(current -> current.getResult() == Result.NOT_STARTED)
                         .filter(current -> current.getMatchTime().isAfter(DateTimeConverter.nowBrasilia()))
                         .flatMap(current -> {
@@ -135,10 +135,6 @@ public class MatchService {
                         })
                         .doFinally(signal -> pendingInProgressTransitions.remove(match.getId())))
                 .count();
-    }
-
-    private LocalDateTime getBettingOpenTime(Match match) {
-        return match.getMatchTime().minus(BETTING_OPEN_BEFORE_MATCH);
     }
 
     private Mono<Void> delayUntil(LocalDateTime transitionTime) {
@@ -415,8 +411,7 @@ public class MatchService {
     }
 
     private boolean isWithinBettingWindow(LocalDateTime matchTime, LocalDateTime now) {
-        LocalDateTime openTime = matchTime.minus(BETTING_OPEN_BEFORE_MATCH);
-        return !now.isBefore(openTime) && now.isBefore(matchTime);
+        return now.toLocalDate().equals(matchTime.toLocalDate()) && now.isBefore(matchTime);
     }
 
     private Mono<MatchRequestDTO> handleConflictResult(boolean hasConflict, MatchRequestDTO dto) {
