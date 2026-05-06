@@ -337,7 +337,7 @@ Regras relevantes:
 
 ## Rotinas Agendadas
 
-`ApplicationScheduler` roda a cada minuto e atualiza partidas de `NOT_STARTED` para `IN_PROGRESS` quando o horario de inicio ja passou.
+`ApplicationScheduler` abre todas as partidas `NOT_STARTED` do dia a meia-noite e atualiza partidas abertas para `IN_PROGRESS` quando o horario de inicio ja passou.
 
 ---
 

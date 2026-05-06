@@ -24,7 +24,7 @@ public class ApplicationScheduler {
                         error -> log.error(ERROR_SCHEDULER + ": {}", error.getMessage()));
     }
 
-    @Scheduled(cron = "0 0/30 * * * *")
+    @Scheduled(cron = "0 0 0 * * *")
     public void updateMatchesToOpenToBetting(){
         log.info("ApplicationScheduler: Starting updating matches to OPEN_TO_BETTING");
         matchService.autoOpenMatchToBets()

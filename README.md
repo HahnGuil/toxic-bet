@@ -337,7 +337,7 @@ Relevant rules:
 
 ## Scheduled Jobs
 
-`ApplicationScheduler` runs every minute and updates matches from `NOT_STARTED` to `IN_PROGRESS` when their start time has passed.
+`ApplicationScheduler` opens all `NOT_STARTED` matches for the current day at midnight and updates open matches to `IN_PROGRESS` when their start time has passed.
 
 ---
 
