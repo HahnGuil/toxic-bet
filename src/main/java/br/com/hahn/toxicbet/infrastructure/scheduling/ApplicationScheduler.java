@@ -12,10 +12,11 @@ import org.springframework.stereotype.Component;
 public class ApplicationScheduler {
 
     public static final String ERROR_SCHEDULER = "ApplicationScheduler: Error to updating result matches";
+    private static final String BRASILIA_TIME_ZONE = "America/Sao_Paulo";
     private final MatchService matchService;
 
 
-    @Scheduled(cron = "10 0/30 * * * *")
+    @Scheduled(cron = "10 0/30 * * * *", zone = BRASILIA_TIME_ZONE)
     public void updateMatchesToInProgress(){
         log.info("ApplicationScheduler: Staring updating matches to IN_PROGRESS");
         matchService.updateMatchesToInProgress()
@@ -24,7 +25,7 @@ public class ApplicationScheduler {
                         error -> log.error(ERROR_SCHEDULER + ": {}", error.getMessage()));
     }
 
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 0 0 * * *", zone = BRASILIA_TIME_ZONE)
     public void updateMatchesToOpenToBetting(){
         log.info("ApplicationScheduler: Starting updating matches to OPEN_TO_BETTING");
         matchService.autoOpenMatchToBets()
@@ -33,7 +34,7 @@ public class ApplicationScheduler {
                         error -> log.error(ERROR_SCHEDULER + ": {}", error.getMessage()));
     }
 
-    @Scheduled(cron = "0 0 9 * * *")
+    @Scheduled(cron = "0 0 9 * * *", zone = BRASILIA_TIME_ZONE)
     public void deleteOldMatches(){
         log.info("ApplicationScheduler: Starting to delete old matches");
         matchService.deleteOndMatch()
