@@ -41,3 +41,12 @@ integration:
   auth:
     base-url: https://auth.toxicbet.com.br
     application-public-id: ${APPLICATION_ID}
+
+notifications:
+  push:
+    enabled: ${PUSH_NOTIFICATIONS_ENABLED:true}
+    public-key: ${VAPID_PUBLIC_KEY:}
+    private-key: ${VAPID_PRIVATE_KEY:}
+    vapid-subject: ${VAPID_SUBJECT:mailto:guilherme.f.h@hotmail.com}
+    ttl-seconds: ${PUSH_NOTIFICATION_TTL_SECONDS:3600}
+    send-concurrency: ${PUSH_NOTIFICATION_SEND_CONCURRENCY:8}

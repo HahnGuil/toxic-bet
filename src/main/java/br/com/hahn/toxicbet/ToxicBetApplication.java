@@ -3,6 +3,7 @@ package br.com.hahn.toxicbet;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.env.Environment;
@@ -11,6 +12,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @Slf4j
 @EnableScheduling
+@ConfigurationPropertiesScan
 public class ToxicBetApplication implements ApplicationListener<ApplicationReadyEvent> {
 
 
