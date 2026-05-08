@@ -181,6 +181,12 @@ Use `.env.example` como base.
 | `KAFKA_AWS_BOOTSTRAP_SERVERS` | Bootstrap servers do Kafka para AWS |
 | `AUTH_SERVER_JWK_SET_URI` | Endpoint JWK do Auth-Server usado para validar JWT |
 | `AUTH_SERVER_BASE_URL` | URL base do Auth-Server usada em integracoes |
+| `PUSH_NOTIFICATIONS_ENABLED` | Habilita notificacoes Web Push agendadas para a PWA |
+| `VAPID_PUBLIC_KEY` | Chave publica VAPID retornada para a PWA assinar push |
+| `VAPID_PRIVATE_KEY` | Chave privada VAPID usada apenas pela API para enviar push |
+| `VAPID_SUBJECT` | Contato enviado nas claims VAPID |
+| `PUSH_NOTIFICATION_TTL_SECONDS` | TTL da mensagem push em segundos |
+| `PUSH_NOTIFICATION_SEND_CONCURRENCY` | Maximo de envios push concorrentes no scheduler |
 | `SHARED_SERVICES_NETWORK` | Rede Docker compartilhada entre servicos |
 
 Exemplo:
@@ -194,6 +200,10 @@ POSTGRES_DOCKER_DB=toxic-bet
 KAFKA_BOOTSTRAP_SERVERS=kafka:9092
 AUTH_SERVER_JWK_SET_URI=http://ms-auth-server:2300/auth-server/public-key/jwks
 AUTH_SERVER_BASE_URL=http://ms-auth-server:2300
+PUSH_NOTIFICATIONS_ENABLED=true
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=mailto:guilherme.f.h@hotmail.com
 SHARED_SERVICES_NETWORK=shared-services
 ```
 

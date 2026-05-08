@@ -29,6 +29,10 @@ services:
       POSTGRES_DOCKER_PORT: 5432
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
       AUTH_SERVER_JWK_SET_URI: https://auth.toxicbet.com.br/auth-server/public-key/jwks
+      PUSH_NOTIFICATIONS_ENABLED: ${PUSH_NOTIFICATIONS_ENABLED:-true}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:guilherme.f.h@hotmail.com}
     depends_on:
       postgres:
         condition: service_healthy
