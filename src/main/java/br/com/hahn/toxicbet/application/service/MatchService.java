@@ -55,7 +55,7 @@ public class MatchService {
     }
 
     public Flux<MatchResponseDTO> findAll(){
-        return repository.findAll().flatMap(this::buildMatchResponseDTO);
+        return repository.findAllOrderByMatchTimeAsc().flatMap(this::buildMatchResponseDTO);
     }
 
     public Flux<MatchResponseDTO> findMatchesOpenToBets(){
