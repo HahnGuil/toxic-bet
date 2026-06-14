@@ -59,9 +59,7 @@ public class MatchService {
     }
 
     public Flux<MatchResponseDTO> findMatchesOpenToBets(){
-        return repository.findAll()
-                .filter(match -> match.getResult() == Result.OPEN_FOR_BETTING)
-                .filter(this::isOpenForBettingNow)
+        return repository.findOpenForBettingOrderByMatchTimeAsc()
                 .flatMap(this::buildMatchResponseDTO);
     }
 
@@ -146,12 +144,7 @@ public class MatchService {
     }
 
     public boolean isOpenForBettingNow(MatchResponseDTO match) {
-        if (!MatchResponseDTO.ResultEnum.OPEN_FOR_BETTING.equals(match.getResult())) {
-            return false;
-        }
-
-        var matchTime = DateTimeConverter.parseToLocalDateTime(match.getMatchTime());
-        return matchTime != null && isWithinBettingWindow(matchTime, DateTimeConverter.nowBrasilia());
+        return MatchResponseDTO.ResultEnum.OPEN_FOR_BETTING.equals(match.getResult());
     }
 
     public Mono<Match> findById(Long id){
@@ -270,11 +263,7 @@ public class MatchService {
     }
 
     public Flux<MatchResponseDTO> findOpenMatchesByChampionship(Long championshipId) {
-        return repository.findAll()
-                .filter(match -> match.getChampionshipId() != null
-                        && match.getChampionshipId().equals(championshipId))
-                .filter(match -> Result.OPEN_FOR_BETTING.equals(match.getResult()))
-                .filter(this::isOpenForBettingNow)
+        return repository.findOpenForBettingByChampionshipOrderByMatchTimeAsc(championshipId)
                 .flatMap(this::buildMatchResponseDTO);
     }
     public Mono<String> getHomeTeamName(Long homeTeamId) {
