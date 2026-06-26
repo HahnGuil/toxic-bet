@@ -88,18 +88,15 @@ public class BetExecutorService {
 
     private Mono<BetResponseDTO> createAndSaveBet(BetRequestDTO dto, UUID userID) {
         var bet = mapper.toEntity(dto, userID);
+        bet.setUserPoint(null); // Será calculado quando fechar a partida
 
         return betRepository.existsByUserIdAndMatchId(userID, dto.getMatchId())
                 .flatMap(alreadyPlaced -> {
                     if (alreadyPlaced) {
                         return Mono.error(new ConflictException(ErrorMessages.BET_ALREADY_PLACED.getMessage()));
                     }
-                    return oddsService.updateOddsForBet(bet.getMatchId(), bet.getResult(), dto.getOdds())
-                            .flatMap(userPoints -> {
-                                bet.setUserPoint(userPoints);
-                                bet.setBetOdds(dto.getOdds());
-                                return betRepository.save(bet);
-                            })
+                    return oddsService.updateOddsForBet(bet.getMatchId(), bet.getResult())
+                            .then(betRepository.save(bet))
                             .map(mapper::toDTO)
                             .as(transactionalOperator::transactional);
                 })
