@@ -3,9 +3,11 @@ package br.com.hahn.toxicbet.application.service;
 import br.com.hahn.toxicbet.application.mapper.UserMapper;
 import br.com.hahn.toxicbet.domain.exception.NotAuthorizedException;
 import br.com.hahn.toxicbet.domain.exception.NotFoundException;
+import br.com.hahn.toxicbet.domain.model.Match;
 import br.com.hahn.toxicbet.domain.model.Users;
 import br.com.hahn.toxicbet.domain.model.dto.UserDTO;
 import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
+import br.com.hahn.toxicbet.domain.model.enums.Result;
 import br.com.hahn.toxicbet.domain.model.enums.Role;
 import br.com.hahn.toxicbet.domain.repository.BetRepository;
 import br.com.hahn.toxicbet.domain.repository.UserRepository;
@@ -27,6 +29,7 @@ public class UserService {
     private final UserMapper userMapper;
     private final BetRepository betRepository;
     private final AuthServiceRegistrationService authServiceRegistrationService;
+    private final MatchService matchService;
 
     public Mono<Void> registerUser(String userName, String userEmail, String authorizationHeader) {
         return userRepository.save(userMapper.toEntity(userName, userEmail))
@@ -45,10 +48,45 @@ public class UserService {
     }
 
     public Mono<Void> calculatedUserPoints(Long matchId, String result){
-        return betRepository.findByMatchId(matchId)
-                .filter(bet -> result.equals(bet.getResult().name()))
-                .flatMap(bet -> userRepository.incrementUserPoints(bet.getUserId(), bet.getUserPoint()))
-                .then();
+        return matchService.findById(matchId)
+                .flatMap(match -> betRepository.findByMatchId(matchId)
+                        .filter(bet -> result.equals(bet.getResult().name()))
+                        .flatMap(bet -> {
+                            int totalBets = match.getTotalBetMatch();
+                            int contraryBets = calculateContraryBets(match, Result.valueOf(result), totalBets);
+
+                            Double userPoints = calculateUserPoints(
+                                    bet.getBetOdds(),
+                                    contraryBets,
+                                    totalBets
+                            );
+
+                            log.info("UserService: Calculated points for user {} on match {}: {}",
+                                    bet.getUserId(), matchId, userPoints);
+
+                            return userRepository.incrementUserPoints(bet.getUserId(), userPoints);
+                        })
+                        .then()
+                );
+    }
+
+    private int calculateContraryBets(Match match, Result betResult, Integer totalBets) {
+        int contraryBets = switch (betResult) {
+            case HOME_WIN -> totalBets - match.getTotalBetHomeTeam();
+            case VISITING_WIN -> totalBets - match.getTotalBetVisitingTeam();
+            case DRAW -> totalBets - match.getTotalBetDraw();
+            default -> totalBets;
+        };
+        return Math.max(contraryBets, 1);
+    }
+
+    private Double calculateUserPoints(Double betOdds, int contraryBets, int totalBets){
+        if (totalBets == 0){
+            totalBets = 1;
+        }
+        double result = (betOdds * contraryBets) / totalBets;
+        double truncatedResult = Math.floor(result * 10.0) / 10.0;
+        return Math.max(truncatedResult, 1.0);
     }
 
     public Mono<Users> findById(UUID userId){
