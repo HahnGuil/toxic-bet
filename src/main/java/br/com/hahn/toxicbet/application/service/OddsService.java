@@ -2,6 +2,7 @@ package br.com.hahn.toxicbet.application.service;
 
 import br.com.hahn.toxicbet.domain.model.Match;
 import br.com.hahn.toxicbet.domain.model.enums.BaseValues;
+import br.com.hahn.toxicbet.domain.model.enums.MatchType;
 import br.com.hahn.toxicbet.domain.model.enums.Result;
 import br.com.hahn.toxicbet.domain.repository.MatchRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import java.util.Objects;
 public class OddsService {
 
     private final MatchRepository matchRepository;
+    private static final Integer TOTAL_BETS = 10;
 
     /**
      * Updates odds for a bet without locking.
@@ -52,7 +54,7 @@ public class OddsService {
 
     private Mono<Tuple2<Match, Double>> calculatedOdds(Match match, Result betResult, Double oddsUser){
         match.setTotalBetMatch(match.getTotalBetMatch() + 1);
-        int totalBets = match.getTotalBetMatch();
+        int totalBets = TOTAL_BETS;
 
         log.debug("OddsService: Processing bet for match {}. Current total: {}", match.getId(), totalBets);
 
@@ -64,18 +66,18 @@ public class OddsService {
                     match.setTotalBetHomeTeam(match.getTotalBetHomeTeam() + plusValue());
                     int contraryBets = calculateContraryBets(match, betResult, totalBets);
                     userPoints = calculateUserPoints(contraryBets, totalBets, oddsUser);
-                    match.setOddsHomeTeam(decreaseOdds(match.getOddsHomeTeam()));
-                    match.setOddsDraw(increaseOdds(match.getOddsDraw()));
-                    match.setOddsVisitingTeam(increaseOdds(match.getOddsVisitingTeam()));
+                    match.setOddsHomeTeam(decreaseOdds(match.getOddsHomeTeam(), match));
+                    match.setOddsDraw(increaseOdds(match.getOddsDraw(), match));
+                    match.setOddsVisitingTeam(increaseOdds(match.getOddsVisitingTeam(), match));
                 }
                 case DRAW -> {
                     log.info("OddserService: VOTANDO NO EMPATE {}", betResult);
                     match.setTotalBetDraw(match.getTotalBetDraw() + plusValue());
                     int contraryBets = calculateContraryBets(match, betResult, totalBets);
                     userPoints = calculateUserPoints(contraryBets, totalBets, oddsUser);
-                    match.setOddsVisitingTeam(increaseOdds(match.getOddsVisitingTeam()));
-                    match.setOddsHomeTeam(increaseOdds(match.getOddsHomeTeam()));
-                    match.setOddsDraw(decreaseOdds(match.getOddsDraw()));
+                    match.setOddsVisitingTeam(increaseOdds(match.getOddsVisitingTeam(), match));
+                    match.setOddsHomeTeam(increaseOdds(match.getOddsHomeTeam(), match));
+                    match.setOddsDraw(decreaseOdds(match.getOddsDraw(), match));
                 }
                 case VISITING_WIN -> {
                     log.info("OddserService: VOTANDO NO VISITANTE {}", betResult);
@@ -83,9 +85,9 @@ public class OddsService {
                     int contraryBets = calculateContraryBets(match, betResult, totalBets);
                     userPoints = calculateUserPoints(contraryBets, totalBets, oddsUser);
 
-                    match.setOddsVisitingTeam(decreaseOdds(match.getOddsVisitingTeam()));
-                    match.setOddsDraw(increaseOdds(match.getOddsDraw()));
-                    match.setOddsHomeTeam(increaseOdds(match.getOddsHomeTeam()));
+                    match.setOddsVisitingTeam(decreaseOdds(match.getOddsVisitingTeam(), match));
+                    match.setOddsDraw(increaseOdds(match.getOddsDraw(), match));
+                    match.setOddsHomeTeam(increaseOdds(match.getOddsHomeTeam(), match));
                 }
                 default -> log.warn("OddsService: Unexpected bet result: {}", betResult);
             }
@@ -93,15 +95,29 @@ public class OddsService {
         });
     }
 
-    private double increaseOdds(Double oddsToIncrease){
+    private double increaseOdds(Double oddsToIncrease, Match match) {
+        if(match.getType().equals(MatchType.PENALTI)){
+            return oddsToIncrease + adjustmentPenalValue();
+        }
         return oddsToIncrease + adjustmentValue();
     }
 
-    private double decreaseOdds(Double oddsToDecrease){
+    private double decreaseOdds(Double oddsToDecrease, Match match) {
+        if(match.getType().equals(MatchType.PENALTI)){
+            return decreasePenalOdds(oddsToDecrease);
+        }
+
         if(oddsToDecrease - adjustmentValue() < 1){
             return minimalOddsValue();
         }
         return oddsToDecrease - adjustmentValue();
+    }
+
+    private double decreasePenalOdds(Double oddsToDecrease) {
+        if(oddsToDecrease - adjustmentValue() < 0.5){
+            return minimalPenalValue();
+        }
+        return oddsToDecrease - adjustmentPenalValue();
     }
 
     private int calculateContraryBets(Match match, Result betResult, Integer totalBets) {
@@ -116,9 +132,6 @@ public class OddsService {
     }
 
     private Double calculateUserPoints(int contraryBets, int totalBets, Double oddsUser){
-        if (totalBets == 0){
-            totalBets = 1;
-        }
         double result = (oddsUser * contraryBets) / totalBets;
         double truncatedResult = Math.floor(result * 10.0) / 10.0;
         return Math.max(truncatedResult, 1.0);
@@ -128,11 +141,19 @@ public class OddsService {
         return Objects.requireNonNull(BaseValues.ADJUSTMENT_VALUE.getDoubleValue());
     }
 
+    private Double adjustmentPenalValue(){
+        return Objects.requireNonNull(BaseValues.PENAL_ODDS_VALUE.getDoubleValue());
+    }
+
     private Integer plusValue(){
         return  Objects.requireNonNull(BaseValues.PLUS_VALUE.getIntValue());
     }
 
     private Double minimalOddsValue(){
         return Objects.requireNonNull(BaseValues.MINIMAL_ODD_VALEU.getDoubleValue());
+    }
+
+    private Double minimalPenalValue(){
+        return Objects.requireNonNull(BaseValues.MINIMAL_PENAL_ODDS_VALUE.getDoubleValue());
     }
 }

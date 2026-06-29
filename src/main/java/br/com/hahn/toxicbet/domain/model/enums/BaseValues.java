@@ -10,6 +10,8 @@ public enum BaseValues {
     PLUS_VALUE(1),
     INITIAL_ZERO(0),
     ADJUSTMENT_VALUE(1.0),
+    PENAL_ODDS_VALUE(0.5),
+    MINIMAL_PENAL_ODDS_VALUE(0.5),
     MINIMAL_ODD_VALEU(1.0);
 
     private final Integer intValue;
