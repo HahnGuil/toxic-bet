@@ -12,7 +12,9 @@ public enum BaseValues {
     ADJUSTMENT_VALUE(1.0),
     PENAL_ODDS_VALUE(0.5),
     MINIMAL_PENAL_ODDS_VALUE(0.5),
-    MINIMAL_ODD_VALEU(1.0);
+    MINIMAL_ODD_VALEU(1.0),
+    PENAL_BASE_ODDS(5.0),
+    PENAL_DRAW_BASE_ODDS(0.0);
 
     private final Integer intValue;
     private final Double doubleValue;
