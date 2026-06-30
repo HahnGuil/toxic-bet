@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+
 @Component
 @Slf4j
 @RequiredArgsConstructor
@@ -34,6 +36,15 @@ public class ApplicationScheduler {
                 .subscribe(
                         count -> log.info("ApplicationScheduler: Updating: {} matches to OPEN_TO_BETTING", count),
                         error -> log.error(ERROR_SCHEDULER + ": {}", error.getMessage()));
+    }
+
+    @Scheduled(cron = "0 0 0 * * *", zone = BRASILIA_TIME_ZONE)
+    public void createPenalMatches() {
+        log.info("ApplicationScheduler: Starting creating matches from PENAL");
+        matchService.createPenalMatches()
+                .subscribe(
+                        count -> log.info("ApplicationScheduler: Creating: {} PENALTI Matches", count),
+                        error -> log.error(ERROR_SCHEDULER + " : {}", error.getMessage()));
     }
 
     @Scheduled(cron = "0 */5 * * * *", zone = BRASILIA_TIME_ZONE)

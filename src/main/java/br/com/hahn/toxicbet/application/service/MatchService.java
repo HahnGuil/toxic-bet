@@ -13,6 +13,7 @@ import br.com.hahn.toxicbet.model.MatchResponseDTO;
 import br.com.hahn.toxicbet.util.DateTimeConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -80,6 +81,54 @@ public class MatchService {
                         && match.getMatchTime().isAfter(now)
                         && !match.getMatchTime().isAfter(thirtyMinutesFromNow)
         );
+    }
+
+    public Mono<Long> createPenalMatches() {
+        LocalDateTime cutoff = LocalDateTime.of(2026, 7, 4, 0, 0);
+
+        return repository.findAll()
+                .filter(match -> MatchType.REGULAR.equals(match.getType()))
+                .filter(match -> !match.getMatchTime().isBefore(cutoff))
+                .filter(match -> match.getResult() == Result.NOT_STARTED)
+                .flatMap(match ->
+                        hasPenalMatchAlreadyCreated(match)
+                                .filter(alreadyCreated -> !alreadyCreated)
+                                .flatMap(ignored -> createPenalMatch(match))
+                                .flatMap(repository::save)
+                ).count();
+    }
+
+    private Mono<Boolean> hasPenalMatchAlreadyCreated(Match regularMatch) {
+        LocalDateTime penalMatchTime = regularMatch.getMatchTime().plusMinutes(90);
+
+        return repository.findAll()
+                .filter(match -> MatchType.PENALTI.equals(match.getType()))
+                .filter(match -> match.getHomeTeamId().equals(regularMatch.getHomeTeamId()))
+                .filter(match -> match.getVisitingTeamId().equals(regularMatch.getVisitingTeamId()))
+                .filter(match -> match.getMatchTime().equals(penalMatchTime))
+                .hasElements();
+    }
+
+    private Mono<Match> createPenalMatch(Match match) {
+        Match penalMatch = new Match();
+        penalMatch.setMatchTime(match.getMatchTime().plusMinutes(90));
+        penalMatch.setResult(Result.NOT_STARTED);
+        penalMatch.setTotalBetMatch(0);
+        penalMatch.setChampionshipId(2L);
+        penalMatch.setOddsDraw(0.0);
+        penalMatch.setOddsHomeTeam(5.0);
+        penalMatch.setOddsVisitingTeam(5.0);
+        penalMatch.setHomeTeamId(match.getHomeTeamId());
+        penalMatch.setVisitingTeamId(match.getVisitingTeamId());
+        penalMatch.setHomeTeamScore(match.getHomeTeamScore());
+        penalMatch.setVisitingTeamScore(match.getVisitingTeamScore());
+        penalMatch.setTotalBetDraw(0);
+        penalMatch.setTotalBetHomeTeam(0);
+        penalMatch.setTotalBetVisitingTeam(0);
+        penalMatch.setVersion(0);
+        penalMatch.setType(MatchType.PENALTI);
+
+        return Mono.just(penalMatch);
     }
 
     private Mono<Long> autoOpenMatches(Predicate<Match> extraFilter) {
