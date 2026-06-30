@@ -3,10 +3,12 @@ package br.com.hahn.toxicbet.application.service;
 import br.com.hahn.toxicbet.application.mapper.UserMapper;
 import br.com.hahn.toxicbet.domain.exception.NotFoundException;
 import br.com.hahn.toxicbet.domain.model.Bet;
+import br.com.hahn.toxicbet.domain.model.Match;
 import br.com.hahn.toxicbet.domain.model.Users;
 import br.com.hahn.toxicbet.domain.model.dto.UserDTO;
 import br.com.hahn.toxicbet.domain.model.enums.Result;
 import br.com.hahn.toxicbet.domain.repository.BetRepository;
+import br.com.hahn.toxicbet.domain.repository.MatchRepository;
 import br.com.hahn.toxicbet.domain.repository.UserRepository;
 import br.com.hahn.toxicbet.model.UserResponseDTO;
 import org.junit.jupiter.api.Test;
@@ -38,6 +40,9 @@ class UserServiceTest {
 
     @Mock
     private AuthServiceRegistrationService authServiceRegistrationService;
+
+    @Mock
+    private MatchRepository matchRepository;
 
     @InjectMocks
     private UserService service;
@@ -85,18 +90,26 @@ class UserServiceTest {
         Long matchId = 7L;
         UUID userId = UUID.randomUUID();
 
+        Match match = new Match();
+        match.setId(matchId);
+        match.setTotalBetMatch(10);
+        match.setTotalBetHomeTeam(3);
+        match.setTotalBetDraw(4);
+        match.setTotalBetVisitingTeam(3);
+
         Bet winBet = new Bet();
         winBet.setMatchId(matchId);
         winBet.setUserId(userId);
         winBet.setResult(Result.HOME_WIN);
-        winBet.setUserPoint(3.5);
+        winBet.setBetOdds(5.0);
 
         Bet drawBet = new Bet();
         drawBet.setMatchId(matchId);
         drawBet.setUserId(UUID.randomUUID());
         drawBet.setResult(Result.DRAW);
-        drawBet.setUserPoint(9.0);
+        drawBet.setBetOdds(9.0);
 
+        when(matchRepository.findById(matchId)).thenReturn(Mono.just(match));
         when(betRepository.findByMatchId(matchId)).thenReturn(Flux.just(winBet, drawBet));
         when(userRepository.incrementUserPoints(userId, 3.5)).thenReturn(Mono.just(1));
 

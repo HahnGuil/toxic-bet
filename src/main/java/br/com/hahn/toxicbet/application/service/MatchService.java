@@ -5,10 +5,7 @@ import br.com.hahn.toxicbet.domain.exception.*;
 import br.com.hahn.toxicbet.domain.model.Championship;
 import br.com.hahn.toxicbet.domain.model.Match;
 import br.com.hahn.toxicbet.domain.model.Team;
-import br.com.hahn.toxicbet.domain.model.enums.BaseValues;
-import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
-import br.com.hahn.toxicbet.domain.model.enums.Result;
-import br.com.hahn.toxicbet.domain.model.enums.Role;
+import br.com.hahn.toxicbet.domain.model.enums.*;
 import br.com.hahn.toxicbet.domain.repository.MatchRepository;
 import br.com.hahn.toxicbet.model.CloseMatchRequestDTO;
 import br.com.hahn.toxicbet.model.MatchRequestDTO;
@@ -161,20 +158,47 @@ public class MatchService {
                         log.info("MatchService: User: {}, is closing matches in batch at: {}", email, DateTimeConverter.formatInstantNow()))
                 .thenMany(requests.flatMap(req -> {
                     Result finalResult = Result.valueOf(req.getResult().getValue());
-                    validateFinalScore(finalResult, req.getHomeTeamScore(), req.getVisitingTeamScore());
                     return repository.findById(req.getMatchId())
                             .switchIfEmpty(Mono.error(new NotFoundException(ErrorMessages.MATCH_NOT_FOUND.getMessage())))
                             .flatMap(match -> {
                                 match.setResult(finalResult);
                                 match.setHomeTeamScore(req.getHomeTeamScore());
                                 match.setVisitingTeamScore(req.getVisitingTeamScore());
-                                return repository.save(match)
+
+                                return validadeMatchToClose(match, finalResult)
+                                        .flatMap(repository::save)
                                         .then(userService.calculatedUserPoints(match.getId(), finalResult.name()));
                             });
                 }))
                 .then()
                 .doOnSuccess(success ->
                         log.info("MatchService: Batch close matches completed for user: {} at: {}", email, DateTimeConverter.formatInstantNow()));
+    }
+
+    private Mono<Match> validadeMatchToClose(Match match, Result finalResult) {
+        if (MatchType.PENALTI.equals(match.getType())) {
+            switch (finalResult) {
+                case HOME_WIN -> {
+                    match.setHomeTeamScore(1);
+                    match.setVisitingTeamScore(0);
+                }
+                case VISITING_WIN -> {
+                    match.setHomeTeamScore(0);
+                    match.setVisitingTeamScore(1);
+                }
+                case DRAW -> {
+                    return Mono.error(new BusinessException("Penaltis não pode ter empate"));
+                }
+                default -> {
+                    return Mono.error(new BusinessException("Resultado inválido para partida de pênaltis"));
+                }
+            }
+        }
+
+        return Mono.fromCallable(() -> {
+            validateFinalScore(finalResult, match.getHomeTeamScore(), match.getVisitingTeamScore());
+            return match;
+        });
     }
 
     private void validateFinalScore(Result finalResult, Integer homeTeamScore, Integer visitingTeamScore) {
@@ -393,10 +417,6 @@ public class MatchService {
     private boolean isInTimeWindow(LocalDateTime matchTime, LocalDateTime startWindow, LocalDateTime endWindow) {
         return (matchTime.isAfter(startWindow) || matchTime.isEqual(startWindow))
                 && (matchTime.isBefore(endWindow) || matchTime.isEqual(endWindow));
-    }
-
-    private boolean isOpenForBettingNow(Match match) {
-        return isWithinBettingWindow(match.getMatchTime(), DateTimeConverter.nowBrasilia());
     }
 
     private boolean isWithinBettingWindow(LocalDateTime matchTime, LocalDateTime now) {

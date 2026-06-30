@@ -4,6 +4,7 @@ import br.com.hahn.toxicbet.application.mapper.BetMapper;
 import br.com.hahn.toxicbet.domain.exception.BusinessException;
 import br.com.hahn.toxicbet.domain.exception.ConflictException;
 import br.com.hahn.toxicbet.domain.model.Match;
+import br.com.hahn.toxicbet.domain.model.enums.Result;
 import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
 import br.com.hahn.toxicbet.domain.repository.BetRepository;
 import br.com.hahn.toxicbet.model.BetRequestDTO;
@@ -79,33 +80,40 @@ public class BetExecutorService {
         return Mono.zip(
                 findUsersByEmail(userEmail),
                 isMatchOpenForBetting(dto.getMatchId())
-        ).flatMap(tuple -> createAndSaveBet(dto, tuple.getT1()));
+        ).flatMap(tuple -> createAndSaveBet(dto, tuple.getT1(), tuple.getT2()));
     }
 
     private Mono<UUID> findUsersByEmail(String userEmail) {
         return userService.findUserByEmail(userEmail);
     }
 
-    private Mono<BetResponseDTO> createAndSaveBet(BetRequestDTO dto, UUID userID) {
+    private Mono<BetResponseDTO> createAndSaveBet(BetRequestDTO dto, UUID userID, Match match) {
         var bet = mapper.toEntity(dto, userID);
+        bet.setBetOdds(resolveBetOdds(match, bet.getResult()));
+        bet.setUserPoint(null); // Será calculado quando fechar a partida
 
         return betRepository.existsByUserIdAndMatchId(userID, dto.getMatchId())
                 .flatMap(alreadyPlaced -> {
-                    if (alreadyPlaced) {
+                    if (Boolean.TRUE.equals(alreadyPlaced)) {
                         return Mono.error(new ConflictException(ErrorMessages.BET_ALREADY_PLACED.getMessage()));
                     }
-                    return oddsService.updateOddsForBet(bet.getMatchId(), bet.getResult(), dto.getOdds())
-                            .flatMap(userPoints -> {
-                                bet.setUserPoint(userPoints);
-                                bet.setBetOdds(dto.getOdds());
-                                return betRepository.save(bet);
-                            })
+                    return oddsService.updateOddsForBet(bet.getMatchId(), bet.getResult())
+                            .then(betRepository.save(bet))
                             .map(mapper::toDTO)
                             .as(transactionalOperator::transactional);
                 })
                 .onErrorMap(DuplicateKeyException.class,
                         error -> new ConflictException(ErrorMessages.BET_ALREADY_PLACED.getMessage()))
                 .flatMap(response -> publishOddsUpdate(dto.getMatchId()).thenReturn(response));
+    }
+
+    private Double resolveBetOdds(Match match, Result result) {
+        return switch (result) {
+            case HOME_WIN -> match.getOddsHomeTeam();
+            case DRAW -> match.getOddsDraw();
+            case VISITING_WIN -> match.getOddsVisitingTeam();
+            default -> null;
+        };
     }
 
     private Mono<Void> publishOddsUpdate(Long matchId) {
