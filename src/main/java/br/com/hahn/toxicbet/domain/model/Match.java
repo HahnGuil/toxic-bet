@@ -1,6 +1,8 @@
 package br.com.hahn.toxicbet.domain.model;
 
+import br.com.hahn.toxicbet.domain.model.enums.MatchType;
 import br.com.hahn.toxicbet.domain.model.enums.Result;
+import br.com.hahn.toxicbet.model.BetResultResponseDTO;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.annotation.Id;
@@ -61,4 +63,7 @@ public class Match {
 
     @Column("version")
     private Integer version;
+
+    @Column("type")
+    private MatchType type;
 }
