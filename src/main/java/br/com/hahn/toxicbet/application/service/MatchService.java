@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 @Service
 @Slf4j
@@ -66,16 +67,29 @@ public class MatchService {
                 .flatMap(this::buildMatchResponseDTO);
     }
 
-    public Mono<Long> autoOpenMatchToBets(){
+    public Mono<Long> autoOpenMatchToBets() {
+        return autoOpenMatches(match -> true);
+    }
+
+    public Mono<Long> autoOpenPenalMatchToBets() {
+        LocalDateTime now = DateTimeConverter.nowBrasilia();
+        LocalDateTime thirtyMinutesFromNow = now.plusMinutes(30);
+
+        return autoOpenMatches(match ->
+                MatchType.PENALTI.equals(match.getType())
+                        && match.getMatchTime().isAfter(now)
+                        && !match.getMatchTime().isAfter(thirtyMinutesFromNow)
+        );
+    }
+
+    private Mono<Long> autoOpenMatches(Predicate<Match> extraFilter) {
         LocalDateTime now = DateTimeConverter.nowBrasilia();
         LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
         LocalDateTime startOfNextDay = startOfDay.plusDays(1);
 
         return repository.findAll()
-                .filter(match -> match.getResult() == Result.NOT_STARTED)
-                .filter(match -> !match.getMatchTime().isBefore(startOfDay))
-                .filter(match -> match.getMatchTime().isBefore(startOfNextDay))
-                .filter(match -> match.getMatchTime().isAfter(now))
+                .filter(match -> isEligibleToOpen(match, startOfDay, startOfNextDay, now))
+                .filter(extraFilter)
                 .filter(match -> pendingOpenTransitions.add(match.getId()))
                 .flatMap(match -> repository.findById(match.getId())
                         .filter(current -> current.getResult() == Result.NOT_STARTED)
@@ -90,6 +104,14 @@ public class MatchService {
                         .doFinally(signal -> pendingOpenTransitions.remove(match.getId())))
                 .count();
     }
+
+    private boolean isEligibleToOpen(Match match, LocalDateTime startOfDay, LocalDateTime startOfNextDay, LocalDateTime now) {
+        return match.getResult() == Result.NOT_STARTED
+                && !match.getMatchTime().isBefore(startOfDay)
+                && match.getMatchTime().isBefore(startOfNextDay)
+                && match.getMatchTime().isAfter(now);
+    }
+
 
     public Mono<Long> deleteOndMatch() {
         log.info("ApplicationScheduler: Starting to delete old matches at: {}", DateTimeConverter.formatInstantNow());
@@ -417,10 +439,6 @@ public class MatchService {
     private boolean isInTimeWindow(LocalDateTime matchTime, LocalDateTime startWindow, LocalDateTime endWindow) {
         return (matchTime.isAfter(startWindow) || matchTime.isEqual(startWindow))
                 && (matchTime.isBefore(endWindow) || matchTime.isEqual(endWindow));
-    }
-
-    private boolean isWithinBettingWindow(LocalDateTime matchTime, LocalDateTime now) {
-        return now.toLocalDate().equals(matchTime.toLocalDate()) && now.isBefore(matchTime);
     }
 
     private Mono<MatchRequestDTO> handleConflictResult(boolean hasConflict, MatchRequestDTO dto) {

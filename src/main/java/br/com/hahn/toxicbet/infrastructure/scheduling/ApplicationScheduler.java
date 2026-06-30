@@ -28,11 +28,20 @@ public class ApplicationScheduler {
     }
 
     @Scheduled(cron = "0 0 0 * * *", zone = BRASILIA_TIME_ZONE)
-    public void updateMatchesToOpenToBetting(){
+    public void updateMatchesToOpenToBetting() {
         log.info("ApplicationScheduler: Starting updating matches to OPEN_TO_BETTING");
         matchService.autoOpenMatchToBets()
                 .subscribe(
-                        count -> log.info("ApplicationScheduler: Updating: {} matches to OPENT_TO_BETTING", count),
+                        count -> log.info("ApplicationScheduler: Updating: {} matches to OPEN_TO_BETTING", count),
+                        error -> log.error(ERROR_SCHEDULER + ": {}", error.getMessage()));
+    }
+
+    @Scheduled(cron = "0 */5 * * * *", zone = BRASILIA_TIME_ZONE)
+    public void openPenalMatch() {
+        log.info("ApplicationScheduler: Starting openPenalMatch");
+        matchService.autoOpenPenalMatchToBets()
+                .subscribe(
+                        count -> log.info("ApplicationScheduler: Updating: {} penal matches to OPEN_TO_BETTING", count),
                         error -> log.error(ERROR_SCHEDULER + ": {}", error.getMessage()));
     }
 
