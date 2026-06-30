@@ -10,6 +10,7 @@ import br.com.hahn.toxicbet.domain.model.enums.ErrorMessages;
 import br.com.hahn.toxicbet.domain.model.enums.Result;
 import br.com.hahn.toxicbet.domain.model.enums.Role;
 import br.com.hahn.toxicbet.domain.repository.BetRepository;
+import br.com.hahn.toxicbet.domain.repository.MatchRepository;
 import br.com.hahn.toxicbet.domain.repository.UserRepository;
 import br.com.hahn.toxicbet.model.UserResponseDTO;
 import br.com.hahn.toxicbet.util.DateTimeConverter;
@@ -29,7 +30,7 @@ public class UserService {
     private final UserMapper userMapper;
     private final BetRepository betRepository;
     private final AuthServiceRegistrationService authServiceRegistrationService;
-    private final MatchService matchService;
+    private final MatchRepository matchRepository;
 
     public Mono<Void> registerUser(String userName, String userEmail, String authorizationHeader) {
         return userRepository.save(userMapper.toEntity(userName, userEmail))
@@ -48,10 +49,16 @@ public class UserService {
     }
 
     public Mono<Void> calculatedUserPoints(Long matchId, String result){
-        return matchService.findById(matchId)
+        return matchRepository.findById(matchId)
                 .flatMap(match -> betRepository.findByMatchId(matchId)
                         .filter(bet -> result.equals(bet.getResult().name()))
                         .flatMap(bet -> {
+                            if (bet.getBetOdds() == null) {
+                                log.error("UserService: Bet {} for user {} on match {} has null odds. Skipping points calculation.",
+                                        bet.getId(), bet.getUserId(), matchId);
+                                return Mono.empty();
+                            }
+
                             int totalBets = match.getTotalBetMatch();
                             int contraryBets = calculateContraryBets(match, Result.valueOf(result), totalBets);
 
@@ -70,7 +77,16 @@ public class UserService {
                 );
     }
 
-    private int calculateContraryBets(Match match, Result betResult, Integer totalBets) {
+    public Double calculateUserPoints(Double betOdds, int contraryBets, int totalBets){
+        if (totalBets == 0){
+            totalBets = 1;
+        }
+        double result = (betOdds * contraryBets) / totalBets;
+        double truncatedResult = Math.floor(result * 10.0) / 10.0;
+        return Math.max(truncatedResult, 1.0);
+    }
+
+    public int calculateContraryBets(Match match, Result betResult, Integer totalBets) {
         int contraryBets = switch (betResult) {
             case HOME_WIN -> totalBets - match.getTotalBetHomeTeam();
             case VISITING_WIN -> totalBets - match.getTotalBetVisitingTeam();
@@ -78,15 +94,6 @@ public class UserService {
             default -> totalBets;
         };
         return Math.max(contraryBets, 1);
-    }
-
-    private Double calculateUserPoints(Double betOdds, int contraryBets, int totalBets){
-        if (totalBets == 0){
-            totalBets = 1;
-        }
-        double result = (betOdds * contraryBets) / totalBets;
-        double truncatedResult = Math.floor(result * 10.0) / 10.0;
-        return Math.max(truncatedResult, 1.0);
     }
 
     public Mono<Users> findById(UUID userId){

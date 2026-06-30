@@ -1430,8 +1430,6 @@ components:
       required:
         - matchId
         - result
-        - homeTeamScore
-        - visitingTeamScore
       properties:
         matchId:
           type: integer

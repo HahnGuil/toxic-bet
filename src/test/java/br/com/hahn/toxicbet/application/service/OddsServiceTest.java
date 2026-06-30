@@ -1,6 +1,7 @@
 package br.com.hahn.toxicbet.application.service;
 
 import br.com.hahn.toxicbet.domain.model.Match;
+import br.com.hahn.toxicbet.domain.model.enums.MatchType;
 import br.com.hahn.toxicbet.domain.model.enums.Result;
 import br.com.hahn.toxicbet.domain.repository.MatchRepository;
 import org.junit.jupiter.api.Test;
@@ -27,14 +28,13 @@ class OddsServiceTest {
     private OddsService service;
 
     @Test
-    void shouldUpdateOddsAndReturnUserPointsForHomeWin() {
+    void shouldUpdateOddsForHomeWin() {
         Match match = createBaseMatch();
 
         when(matchRepository.findById(1L)).thenReturn(Mono.just(match));
         when(matchRepository.save(any(Match.class))).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
 
-        StepVerifier.create(service.updateOddsForBet(1L, Result.HOME_WIN, 2.5))
-                .expectNext(2.5)
+        StepVerifier.create(service.updateOddsForBet(1L, Result.HOME_WIN))
                 .verifyComplete();
 
         ArgumentCaptor<Match> captor = ArgumentCaptor.forClass(Match.class);
@@ -56,8 +56,7 @@ class OddsServiceTest {
         when(matchRepository.findById(1L)).thenReturn(Mono.just(match));
         when(matchRepository.save(any(Match.class))).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
 
-        StepVerifier.create(service.updateOddsForBet(1L, Result.DRAW, 1.0))
-                .expectNext(1.0)
+        StepVerifier.create(service.updateOddsForBet(1L, Result.DRAW))
                 .verifyComplete();
 
         ArgumentCaptor<Match> captor = ArgumentCaptor.forClass(Match.class);
@@ -68,6 +67,7 @@ class OddsServiceTest {
     private Match createBaseMatch() {
         Match match = new Match();
         match.setId(1L);
+        match.setType(MatchType.REGULAR);
         match.setTotalBetMatch(0);
         match.setTotalBetHomeTeam(0);
         match.setTotalBetDraw(0);
@@ -78,4 +78,3 @@ class OddsServiceTest {
         return match;
     }
 }
-
