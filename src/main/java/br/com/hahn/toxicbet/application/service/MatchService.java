@@ -13,6 +13,7 @@ import br.com.hahn.toxicbet.model.MatchResponseDTO;
 import br.com.hahn.toxicbet.util.DateTimeConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -22,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 @Service
 @Slf4j
@@ -66,16 +68,77 @@ public class MatchService {
                 .flatMap(this::buildMatchResponseDTO);
     }
 
-    public Mono<Long> autoOpenMatchToBets(){
+    public Mono<Long> autoOpenMatchToBets() {
+        return autoOpenMatches(match -> true);
+    }
+
+    public Mono<Long> autoOpenPenalMatchToBets() {
+        LocalDateTime now = DateTimeConverter.nowBrasilia();
+        LocalDateTime thirtyMinutesFromNow = now.plusMinutes(30);
+
+        return autoOpenMatches(match ->
+                MatchType.PENALTI.equals(match.getType())
+                        && match.getMatchTime().isAfter(now)
+                        && !match.getMatchTime().isAfter(thirtyMinutesFromNow)
+        );
+    }
+
+    public Mono<Long> createPenalMatches() {
+        LocalDateTime cutoff = LocalDateTime.of(2026, 7, 4, 0, 0);
+
+        return repository.findAll()
+                .filter(match -> MatchType.REGULAR.equals(match.getType()))
+                .filter(match -> !match.getMatchTime().isBefore(cutoff))
+                .filter(match -> match.getResult() == Result.NOT_STARTED)
+                .flatMap(match ->
+                        hasPenalMatchAlreadyCreated(match)
+                                .filter(alreadyCreated -> !alreadyCreated)
+                                .flatMap(ignored -> createPenalMatch(match))
+                                .flatMap(repository::save)
+                ).count();
+    }
+
+    private Mono<Boolean> hasPenalMatchAlreadyCreated(Match regularMatch) {
+        LocalDateTime penalMatchTime = regularMatch.getMatchTime().plusMinutes(90);
+
+        return repository.findAll()
+                .filter(match -> MatchType.PENALTI.equals(match.getType()))
+                .filter(match -> match.getHomeTeamId().equals(regularMatch.getHomeTeamId()))
+                .filter(match -> match.getVisitingTeamId().equals(regularMatch.getVisitingTeamId()))
+                .filter(match -> match.getMatchTime().equals(penalMatchTime))
+                .hasElements();
+    }
+
+    private Mono<Match> createPenalMatch(Match match) {
+        Match penalMatch = new Match();
+        penalMatch.setMatchTime(match.getMatchTime().plusMinutes(90));
+        penalMatch.setResult(Result.NOT_STARTED);
+        penalMatch.setTotalBetMatch(0);
+        penalMatch.setChampionshipId(2L);
+        penalMatch.setOddsDraw(0.0);
+        penalMatch.setOddsHomeTeam(5.0);
+        penalMatch.setOddsVisitingTeam(5.0);
+        penalMatch.setHomeTeamId(match.getHomeTeamId());
+        penalMatch.setVisitingTeamId(match.getVisitingTeamId());
+        penalMatch.setHomeTeamScore(match.getHomeTeamScore());
+        penalMatch.setVisitingTeamScore(match.getVisitingTeamScore());
+        penalMatch.setTotalBetDraw(0);
+        penalMatch.setTotalBetHomeTeam(0);
+        penalMatch.setTotalBetVisitingTeam(0);
+        penalMatch.setVersion(0);
+        penalMatch.setType(MatchType.PENALTI);
+
+        return Mono.just(penalMatch);
+    }
+
+    private Mono<Long> autoOpenMatches(Predicate<Match> extraFilter) {
         LocalDateTime now = DateTimeConverter.nowBrasilia();
         LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
         LocalDateTime startOfNextDay = startOfDay.plusDays(1);
 
         return repository.findAll()
-                .filter(match -> match.getResult() == Result.NOT_STARTED)
-                .filter(match -> !match.getMatchTime().isBefore(startOfDay))
-                .filter(match -> match.getMatchTime().isBefore(startOfNextDay))
-                .filter(match -> match.getMatchTime().isAfter(now))
+                .filter(match -> isEligibleToOpen(match, startOfDay, startOfNextDay, now))
+                .filter(extraFilter)
                 .filter(match -> pendingOpenTransitions.add(match.getId()))
                 .flatMap(match -> repository.findById(match.getId())
                         .filter(current -> current.getResult() == Result.NOT_STARTED)
@@ -90,6 +153,14 @@ public class MatchService {
                         .doFinally(signal -> pendingOpenTransitions.remove(match.getId())))
                 .count();
     }
+
+    private boolean isEligibleToOpen(Match match, LocalDateTime startOfDay, LocalDateTime startOfNextDay, LocalDateTime now) {
+        return match.getResult() == Result.NOT_STARTED
+                && !match.getMatchTime().isBefore(startOfDay)
+                && match.getMatchTime().isBefore(startOfNextDay)
+                && match.getMatchTime().isAfter(now);
+    }
+
 
     public Mono<Long> deleteOndMatch() {
         log.info("ApplicationScheduler: Starting to delete old matches at: {}", DateTimeConverter.formatInstantNow());
@@ -417,10 +488,6 @@ public class MatchService {
     private boolean isInTimeWindow(LocalDateTime matchTime, LocalDateTime startWindow, LocalDateTime endWindow) {
         return (matchTime.isAfter(startWindow) || matchTime.isEqual(startWindow))
                 && (matchTime.isBefore(endWindow) || matchTime.isEqual(endWindow));
-    }
-
-    private boolean isWithinBettingWindow(LocalDateTime matchTime, LocalDateTime now) {
-        return now.toLocalDate().equals(matchTime.toLocalDate()) && now.isBefore(matchTime);
     }
 
     private Mono<MatchRequestDTO> handleConflictResult(boolean hasConflict, MatchRequestDTO dto) {
